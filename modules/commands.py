@@ -98,11 +98,19 @@ def handle_command(client, user_input: str, command: str) -> tuple[bool, bool]:
         save_draft(topic, draft_text)
         return True, False
 
+    if command == "draft":
+        print("\n投稿テーマを入力してください。例: draft AI副業の注意点")
+        return True, False
+
     if command.startswith("draftx "):
         topic = user_input[7:].strip()
         draft_text = create_x_draft(client, topic)
         print(f"\n📝 X投稿下書き\n{'-' * 50}\n{draft_text}\n{'-' * 50}")
         save_draft(f"X: {topic}", draft_text)
+        return True, False
+
+    if command == "draftx":
+        print("\n投稿テーマを入力してください。例: draftx AI副業の注意点")
         return True, False
 
     if command.startswith("draftinsta "):
@@ -112,11 +120,19 @@ def handle_command(client, user_input: str, command: str) -> tuple[bool, bool]:
         save_draft(f"Instagram: {topic}", draft_text)
         return True, False
 
+    if command == "draftinsta":
+        print("\n投稿テーマを入力してください。例: draftinsta AI副業の注意点")
+        return True, False
+
     if command.startswith("draftshort "):
         topic = user_input[11:].strip()
         draft_text = create_short_video_script(client, topic)
         print(f"\n🎬 ショート動画台本\n{'-' * 50}\n{draft_text}\n{'-' * 50}")
         save_draft(f"ShortVideo: {topic}", draft_text)
+        return True, False
+
+    if command == "draftshort":
+        print("\n投稿テーマを入力してください。例: draftshort AI副業の注意点")
         return True, False
 
     if command == "drafts":
@@ -133,6 +149,10 @@ def handle_command(client, user_input: str, command: str) -> tuple[bool, bool]:
         show_raw_news(topic, news_items)
         return True, False
 
+    if command == "newsraw":
+        print("\nニュース検索テーマを入力してください。例: newsraw OpenAI")
+        return True, False
+
     if command.startswith("news "):
         topic = user_input[5:].strip()
         news_items = fetch_google_news(topic)
@@ -143,10 +163,6 @@ def handle_command(client, user_input: str, command: str) -> tuple[bool, bool]:
 
     if command == "news":
         print("\nニュース検索テーマを入力してください。例: news AI 副業")
-        return True, False
-
-    if command == "newsraw":
-        print("\nニュース検索テーマを入力してください。例: newsraw OpenAI")
         return True, False
 
     return False, False
