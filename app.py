@@ -22,11 +22,22 @@ if "pdf_text" not in st.session_state:
 
 with st.sidebar:
     st.header("📄 PDF読み込み")
+    if st.session_state.pdf_text:
+        st.success("PDFモード中")
+        st.caption(f"読み込み文字数: {len(st.session_state.pdf_text):,}文字")
+
+        if st.button("PDFを解除"):
+            st.session_state.pdf_text = ""
+            st.success("PDFを解除しました")
+            st.rerun()
+    else:
+        st.info("PDFは未読み込みです")
     uploaded_pdf = st.file_uploader("PDFをアップロード", type=["pdf"])
 
     if uploaded_pdf is not None:
         st.session_state.pdf_text = extract_text_from_pdf(uploaded_pdf)
         st.success("PDFを読み込みました")
+        st.caption(f"読み込み文字数: {len(st.session_state.pdf_text):,}文字")
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
