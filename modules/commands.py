@@ -1,4 +1,5 @@
 from modules.config import COMMANDS
+from modules.daily import get_daily_plan
 from modules.memory import clear_history, save_history, save_memo, show_history, show_memos
 from modules.news import fetch_google_news, save_news_result, show_raw_news, summarize_news_for_sns
 from modules.sns import (
@@ -35,6 +36,11 @@ def handle_command(client, user_input: str, command: str) -> tuple[bool, bool]:
 
     if command == "help":
         show_help()
+        return True, False
+
+    if command == "daily":
+        daily_plan = get_daily_plan()
+        print(f"\n{daily_plan}")
         return True, False
 
     if command == "history":
