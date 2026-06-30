@@ -5,6 +5,7 @@ from openai import OpenAI
 from modules.ai import ask_ko_ai
 from modules.memory import forget_text, remember_text, save_history
 from modules.pdf_reader import ask_pdf_question, extract_text_from_pdf
+from modules.daily import get_daily_plan
 
 load_dotenv()
 client = OpenAI()
@@ -51,6 +52,16 @@ with st.sidebar:
 
     if st.button("会話をクリア"):
         st.session_state.messages = []
+        st.rerun()
+
+    if st.button("今日の作業メニュー"):
+        daily_plan = get_daily_plan()
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": daily_plan,
+            }
+        )
         st.rerun()
 
     st.divider()
