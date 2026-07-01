@@ -1,7 +1,12 @@
 # Ko AI 🤖
 
+
 Ko AI は、OpenAI API を利用した自分専用の AI アシスタントです。  
 ターミナル版とブラウザで使える GUI 版の両方に対応しています。
+
+## 🌐 デモ（Web版）
+
+https://fxg2etotgfixvckh74hhgq.streamlit.app
 
 ## 主な機能
 
