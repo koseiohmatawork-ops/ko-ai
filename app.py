@@ -10,6 +10,8 @@ from modules.note import create_note_article, save_note_article
 from modules.pdf_reader import ask_pdf_question, extract_text_from_pdf
 from modules.x_post import generate_x_post, save_x_post
 from modules.instagram_post import generate_instagram_post, save_instagram_post
+from modules.threads_post import generate_threads_post, save_threads_post
+from modules.idea_generator import generate_ideas
 
 load_dotenv()
 client = OpenAI()
@@ -40,6 +42,11 @@ if "x_topic" not in st.session_state:
 if "instagram_topic" not in st.session_state:
     st.session_state.instagram_topic = ""
 
+if "threads_topic" not in st.session_state:
+    st.session_state.threads_topic = ""
+
+if "idea_theme" not in st.session_state:
+    st.session_state.idea_theme = ""
 
 def handle_memory_input(text: str) -> str | None:
     text = text.strip()
@@ -69,11 +76,13 @@ def show_post_stock() -> None:
     note_files = sorted(Path("posts/note").glob("*.md"), reverse=True)
     x_files = sorted(Path("posts/x").glob("*.txt"), reverse=True)
     instagram_files = sorted(Path("posts/instagram").glob("*.md"), reverse=True)
+    threads_files = sorted(Path("posts/threads").glob("*.txt"), reverse=True)
 
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
-        f"Instagram投稿: {len(instagram_files)}件"
+        f"Instagram投稿: {len(instagram_files)}件 / "
+        f"Threads投稿: {len(threads_files)}件"
     )
 
     with st.expander("📝 note記事ストック"):
@@ -94,6 +103,13 @@ def show_post_stock() -> None:
         if not instagram_files:
             st.caption("まだInstagram投稿はありません")
         for file_path in instagram_files[:10]:
+            st.subheader(file_path.name)
+            st.write(file_path.read_text(encoding="utf-8"))
+
+    with st.expander("🧵 Threads投稿ストック"):
+        if not threads_files:
+            st.caption("まだThreads投稿はありません")
+        for file_path in threads_files[:10]:
             st.subheader(file_path.name)
             st.write(file_path.read_text(encoding="utf-8"))
 
@@ -162,6 +178,31 @@ with st.sidebar:
             )
 
             st.success("note・X・Instagramを作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("💡 アイデア生成")
+
+    idea_theme = st.text_input(
+        "アイデアのテーマ",
+        placeholder="例: AI副業",
+        key="idea_theme",
+    )
+
+    if st.button("アイデア100個を作成"):
+        if not idea_theme.strip():
+            st.warning("アイデアのテーマを入力してください。")
+        else:
+            with st.spinner("アイデアを作成中..."):
+                ideas = generate_ideas(client, idea_theme.strip())
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"💡 アイデア100個\n\n{ideas}",
+                }
+            )
+            st.success("アイデアを作成しました")
             st.rerun()
 
     st.divider()
@@ -246,6 +287,38 @@ with st.sidebar:
                 }
             )
             st.success("Instagram投稿案を作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("🧵 Threads投稿生成")
+
+    threads_topic = st.text_input(
+        "Threads投稿のテーマ",
+        placeholder="例: AI副業で最初にやること",
+        key="threads_topic",
+    )
+
+    if st.button("Threads投稿を作成"):
+        if not threads_topic.strip():
+            st.warning("Threads投稿のテーマを入力してください。")
+        else:
+            with st.spinner("Threads投稿を作成中..."):
+                threads_post = generate_threads_post(
+                    client,
+                    threads_topic.strip(),
+                )
+                save_threads_post(
+                    threads_topic.strip(),
+                    threads_post,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"🧵 Threads投稿案\n\n{threads_post}",
+                }
+            )
+            st.success("Threads投稿案を作成・保存しました")
             st.rerun()
 
     st.divider()
