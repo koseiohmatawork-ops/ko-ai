@@ -11,6 +11,7 @@ from modules.sns import (
     save_draft,
     show_drafts,
 )
+from modules.status import get_app_status
 from modules.todo import add_todo, complete_todo, show_todos
 
 
@@ -23,13 +24,6 @@ def show_help() -> None:
 
 
 def handle_command(client, user_input: str, command: str) -> tuple[bool, bool]:
-    """
-    コマンドを処理する。
-    戻り値:
-    - command_handled: コマンドとして処理したか
-    - should_exit: 終了するか
-    """
-
     if command == "exit":
         print("👋 Ko AI を終了します。")
         return True, True
@@ -38,9 +32,12 @@ def handle_command(client, user_input: str, command: str) -> tuple[bool, bool]:
         show_help()
         return True, False
 
+    if command == "check":
+        print(f"\n{get_app_status()}")
+        return True, False
+
     if command == "daily":
-        daily_plan = get_daily_plan()
-        print(f"\n{daily_plan}")
+        print(f"\n{get_daily_plan()}")
         return True, False
 
     if command == "history":

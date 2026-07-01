@@ -12,6 +12,8 @@ SYSTEM_PROMPT = """
 COMMANDS = {
     "exit": "Ko AIを終了します",
     "help": "使えるコマンドを表示します",
+    "daily": "今日のAI作業メニューを表示します",
+    "check": "Ko AIの現在の状態を確認します",
     "history": "保存済みの会話履歴を表示します",
     "clear": "会話履歴を削除します",
     "memo": "残したいメモを保存します。例: memo AI投稿アカウントを作る",
