@@ -28,6 +28,9 @@ if "pdf_text" not in st.session_state:
 if "pdf_name" not in st.session_state:
     st.session_state.pdf_name = ""
 
+if "all_topic" not in st.session_state:
+    st.session_state.all_topic = ""
+
 if "note_topic" not in st.session_state:
     st.session_state.note_topic = ""
 
@@ -36,6 +39,7 @@ if "x_topic" not in st.session_state:
 
 if "instagram_topic" not in st.session_state:
     st.session_state.instagram_topic = ""
+
 
 def handle_memory_input(text: str) -> str | None:
     text = text.strip()
@@ -106,6 +110,59 @@ with st.sidebar:
         st.write("📄 PDFモード: ON")
     else:
         st.write("📄 PDFモード: OFF")
+
+    st.divider()
+    st.header("🚀 全部生成")
+
+    all_topic = st.text_input(
+        "全部生成のテーマ",
+        placeholder="例: AI副業で最初にやること",
+        key="all_topic",
+    )
+
+    if st.button("note・X・Instagramを全部作成"):
+        if not all_topic.strip():
+            st.warning("テーマを入力してください。")
+        else:
+            with st.spinner("全部まとめて作成中..."):
+                note_article = create_note_article(client, all_topic.strip())
+                save_note_article(all_topic.strip(), note_article)
+
+                x_post = generate_x_post(client, all_topic.strip())
+                save_x_post(all_topic.strip(), x_post)
+
+                instagram_post = generate_instagram_post(client, all_topic.strip())
+                save_instagram_post(all_topic.strip(), instagram_post)
+
+            all_result = f"""
+🚀 全部生成完了
+
+📝 note記事案
+
+{note_article}
+
+---
+
+🐦 X投稿案
+
+{x_post}
+
+---
+
+📷 Instagram投稿案
+
+{instagram_post}
+""".strip()
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": all_result,
+                }
+            )
+
+            st.success("note・X・Instagramを作成・保存しました")
+            st.rerun()
 
     st.divider()
     st.header("📝 note記事生成")
