@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from modules.ai import ask_ko_ai
+from modules.chat import chat_with_ai
 from modules.daily import get_daily_plan
 from modules.memory import forget_text, get_long_term_memory_text, remember_text, save_history
 from modules.note import create_note_article, save_note_article
@@ -11,7 +12,7 @@ from modules.pdf_reader import ask_pdf_question, extract_text_from_pdf
 from modules.x_post import generate_x_post, save_x_post
 from modules.instagram_post import generate_instagram_post, save_instagram_post
 from modules.threads_post import generate_threads_post, save_threads_post
-from modules.idea_generator import generate_ideas
+from modules.idea_generator import generate_ideas, save_ideas
 
 load_dotenv()
 client = OpenAI()
@@ -77,12 +78,14 @@ def show_post_stock() -> None:
     x_files = sorted(Path("posts/x").glob("*.txt"), reverse=True)
     instagram_files = sorted(Path("posts/instagram").glob("*.md"), reverse=True)
     threads_files = sorted(Path("posts/threads").glob("*.txt"), reverse=True)
+    idea_files = sorted(Path("posts/ideas").glob("*.txt"), reverse=True)
 
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
         f"Instagram投稿: {len(instagram_files)}件 / "
-        f"Threads投稿: {len(threads_files)}件"
+        f"Threads投稿: {len(threads_files)}件 / "
+        f"アイデア: {len(idea_files)}件"
     )
 
     with st.expander("📝 note記事ストック"):
@@ -110,6 +113,13 @@ def show_post_stock() -> None:
         if not threads_files:
             st.caption("まだThreads投稿はありません")
         for file_path in threads_files[:10]:
+            st.subheader(file_path.name)
+            st.write(file_path.read_text(encoding="utf-8"))
+
+    with st.expander("💡 アイデアストック"):
+        if not idea_files:
+            st.caption("まだアイデアはありません")
+        for file_path in idea_files[:10]:
             st.subheader(file_path.name)
             st.write(file_path.read_text(encoding="utf-8"))
 
@@ -195,6 +205,7 @@ with st.sidebar:
         else:
             with st.spinner("アイデアを作成中..."):
                 ideas = generate_ideas(client, idea_theme.strip())
+                save_ideas(idea_theme.strip(), ideas)
 
             st.session_state.messages.append(
                 {
@@ -406,7 +417,7 @@ if user_input:
             response = ask_pdf_question(client, st.session_state.pdf_text, user_input)
 
         else:
-            response = ask_ko_ai(client, user_input)
+            response = chat_with_ai(client, user_input)
 
         save_history("Ko AI", response)
 
