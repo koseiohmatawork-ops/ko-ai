@@ -13,6 +13,8 @@ from modules.x_post import generate_x_post, save_x_post
 from modules.instagram_post import generate_instagram_post, save_instagram_post
 from modules.threads_post import generate_threads_post, save_threads_post
 from modules.image_prompt import generate_image_prompt, save_image_prompt
+from modules.news_analyzer import analyze_news
+from modules.news_fetcher import fetch_ai_news
 from modules.idea_generator import generate_ideas, save_ideas
 
 load_dotenv()
@@ -49,6 +51,12 @@ if "threads_topic" not in st.session_state:
 
 if "image_prompt_theme" not in st.session_state:
     st.session_state.image_prompt_theme = ""
+
+if "news_text" not in st.session_state:
+    st.session_state.news_text = ""
+
+if "latest_news" not in st.session_state:
+    st.session_state.latest_news = ""
 
 if "idea_theme" not in st.session_state:
     st.session_state.idea_theme = ""
@@ -259,6 +267,108 @@ with st.sidebar:
                 }
             )
             st.success("画像プロンプトを作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("📰 ニュース分析")
+
+    if st.button("🤖 最新AIニュースを取得"):
+        with st.spinner("ニュース取得中..."):
+            st.session_state.news_text = fetch_ai_news()
+
+        st.success("最新AIニュースを取得しました")
+        st.rerun()
+
+    news_text = st.text_area(
+        "ニュース本文・URL・メモ",
+        key="news_text",
+        height=200,
+    )
+
+    if st.button("ニュースを分析"):
+        if not news_text.strip():
+            st.warning("ニュース本文を入力してください。")
+        else:
+            with st.spinner("ニュースを分析中..."):
+                news_analysis = analyze_news(client, news_text.strip())
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"📰 ニュース分析結果\n\n{news_analysis}",
+                }
+            )
+            st.success("ニュース分析が完了しました")
+            st.rerun()     
+
+    if st.button("ニュースから全部生成"):
+        if not news_text.strip():
+            st.warning("ニュース本文を入力してください。")
+        else:
+            with st.spinner("ニュースから投稿をまとめて作成中..."):
+                news_analysis = analyze_news(client, news_text.strip())
+
+                note_article = create_note_article(client, news_analysis)
+                save_note_article("ニュース投稿", note_article)
+
+                x_post = generate_x_post(client, news_analysis)
+                save_x_post("ニュース投稿", x_post)
+
+                instagram_post = generate_instagram_post(client, news_analysis)
+                save_instagram_post("ニュース投稿", instagram_post)
+
+                threads_post = generate_threads_post(client, news_analysis)
+                save_threads_post("ニュース投稿", threads_post)
+
+                image_prompt = generate_image_prompt(client, news_analysis)
+                save_image_prompt("ニュース投稿", image_prompt)
+
+            news_result = f"""
+📰 ニュースから全部生成完了
+
+【ニュース分析】
+
+{news_analysis}
+
+---
+
+📝 note記事案
+
+{note_article}
+
+---
+
+🐦 X投稿案
+
+{x_post}
+
+---
+
+📷 Instagram投稿案
+
+{instagram_post}
+
+---
+
+🧵 Threads投稿案
+
+{threads_post}
+
+---
+
+🎨 画像生成プロンプト
+
+{image_prompt}
+""".strip()
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": news_result,
+                }
+            )
+
+            st.success("ニュースから投稿一式を作成・保存しました")
             st.rerun()
 
     st.divider()
