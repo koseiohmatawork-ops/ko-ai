@@ -13,7 +13,7 @@ from modules.x_post import generate_x_post, save_x_post
 from modules.instagram_post import generate_instagram_post, save_instagram_post
 from modules.threads_post import generate_threads_post, save_threads_post
 from modules.image_prompt import generate_image_prompt, save_image_prompt
-from modules.news_analyzer import analyze_news
+from modules.news_analyzer import analyze_news, select_best_news
 from modules.news_fetcher import fetch_ai_news
 from modules.idea_generator import generate_ideas, save_ideas
 
@@ -285,28 +285,33 @@ with st.sidebar:
         height=200,
     )
 
-    if st.button("ニュースを分析"):
+    if st.button("AIが使えそうなニュースを選ぶ"):
         if not news_text.strip():
-            st.warning("ニュース本文を入力してください。")
+            st.warning("ニュースを取得または入力してください。")
         else:
-            with st.spinner("ニュースを分析中..."):
-                news_analysis = analyze_news(client, news_text.strip())
+            with st.spinner("SNS向きのニュースを選定中..."):
+                selected_news = select_best_news(client, news_text.strip())
+
+            st.session_state.latest_news = selected_news
 
             st.session_state.messages.append(
                 {
                     "role": "assistant",
-                    "content": f"📰 ニュース分析結果\n\n{news_analysis}",
+                    "content": f"📰 選ばれたニュース\n\n{selected_news}",
                 }
             )
-            st.success("ニュース分析が完了しました")
-            st.rerun()     
+
+            st.success("SNS向きのニュースを選びました")
+            st.rerun()
 
     if st.button("ニュースから全部生成"):
-        if not news_text.strip():
+        source_news = st.session_state.latest_news or news_text
+
+        if not source_news.strip():
             st.warning("ニュース本文を入力してください。")
         else:
             with st.spinner("ニュースから投稿をまとめて作成中..."):
-                news_analysis = analyze_news(client, news_text.strip())
+                news_analysis = analyze_news(client, source_news.strip())
 
                 note_article = create_note_article(client, news_analysis)
                 save_note_article("ニュース投稿", note_article)
@@ -370,7 +375,6 @@ with st.sidebar:
 
             st.success("ニュースから投稿一式を作成・保存しました")
             st.rerun()
-
     st.divider()
     st.header("📝 note記事生成")
 
