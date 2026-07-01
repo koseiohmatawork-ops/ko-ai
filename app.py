@@ -15,6 +15,7 @@ from modules.threads_post import generate_threads_post, save_threads_post
 from modules.image_prompt import generate_image_prompt, save_image_prompt
 from modules.news_analyzer import analyze_news, select_best_news
 from modules.news_fetcher import fetch_ai_news
+from modules.article_fetcher import fetch_article
 from modules.idea_generator import generate_ideas, save_ideas
 
 load_dotenv()
@@ -277,6 +278,97 @@ with st.sidebar:
             st.session_state.news_text = fetch_ai_news()
 
         st.success("最新AIニュースを取得しました")
+        st.rerun()
+
+    if st.button("🤖 今日のAIニュース一括生成"):
+        with st.spinner("今日のAIニュースから投稿一式を作成中..."):
+            fetched_news = fetch_ai_news()
+            selected_news = select_best_news(client, fetched_news)
+
+            article_text = fetch_article(selected_news)
+            news_source = article_text if not article_text.startswith("記事取得失敗") else selected_news
+
+            news_analysis = analyze_news(client, news_source)
+
+            note_article = create_note_article(client, news_analysis)
+            save_note_article("今日のAIニュース", note_article)
+
+            x_post = generate_x_post(client, news_analysis)
+            save_x_post("今日のAIニュース", x_post)
+
+            instagram_post = generate_instagram_post(client, news_analysis)
+            save_instagram_post("今日のAIニュース", instagram_post)
+
+            threads_post = generate_threads_post(client, news_analysis)
+            save_threads_post("今日のAIニュース", threads_post)
+
+            image_prompt = generate_image_prompt(client, news_analysis)
+            save_image_prompt("今日のAIニュース", image_prompt)
+
+        result = f"""
+🤖 今日のAIニュース一括生成完了
+
+【取得したニュース】
+
+{fetched_news}
+
+---
+
+【選ばれたニュース】
+
+{selected_news}
+
+---
+
+【取得した記事本文（先頭）】
+
+{news_source[:1500]}
+
+---
+
+【ニュース分析】
+
+{news_analysis}
+
+---
+
+📝 note記事案
+
+{note_article}
+
+---
+
+🐦 X投稿案
+
+{x_post}
+
+---
+
+📷 Instagram投稿案
+
+{instagram_post}
+
+---
+
+🧵 Threads投稿案
+
+{threads_post}
+
+---
+
+🎨 画像生成プロンプト
+
+{image_prompt}
+""".strip()
+
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": result,
+            }
+        )
+
+        st.success("今日のAIニュースから投稿一式を作成・保存しました")
         st.rerun()
 
     news_text = st.text_area(

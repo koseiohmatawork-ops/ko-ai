@@ -53,3 +53,5 @@ urllib3==2.7.0
 uvicorn==0.49.0
 websockets==16.0
 feedparser
+requests
+beautifulsoup4
