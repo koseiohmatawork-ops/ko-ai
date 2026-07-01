@@ -9,6 +9,7 @@ from modules.memory import forget_text, get_long_term_memory_text, remember_text
 from modules.note import create_note_article, save_note_article
 from modules.pdf_reader import ask_pdf_question, extract_text_from_pdf
 from modules.x_post import generate_x_post, save_x_post
+from modules.instagram_post import generate_instagram_post, save_instagram_post
 
 load_dotenv()
 client = OpenAI()
@@ -33,6 +34,8 @@ if "note_topic" not in st.session_state:
 if "x_topic" not in st.session_state:
     st.session_state.x_topic = ""
 
+if "instagram_topic" not in st.session_state:
+    st.session_state.instagram_topic = ""
 
 def handle_memory_input(text: str) -> str | None:
     text = text.strip()
@@ -61,8 +64,13 @@ def show_post_stock() -> None:
 
     note_files = sorted(Path("posts/note").glob("*.md"), reverse=True)
     x_files = sorted(Path("posts/x").glob("*.txt"), reverse=True)
+    instagram_files = sorted(Path("posts/instagram").glob("*.md"), reverse=True)
 
-    st.caption(f"note記事: {len(note_files)}件 / X投稿: {len(x_files)}件")
+    st.caption(
+        f"note記事: {len(note_files)}件 / "
+        f"X投稿: {len(x_files)}件 / "
+        f"Instagram投稿: {len(instagram_files)}件"
+    )
 
     with st.expander("📝 note記事ストック"):
         if not note_files:
@@ -75,6 +83,13 @@ def show_post_stock() -> None:
         if not x_files:
             st.caption("まだX投稿はありません")
         for file_path in x_files[:10]:
+            st.subheader(file_path.name)
+            st.write(file_path.read_text(encoding="utf-8"))
+
+    with st.expander("📷 Instagram投稿ストック"):
+        if not instagram_files:
+            st.caption("まだInstagram投稿はありません")
+        for file_path in instagram_files[:10]:
             st.subheader(file_path.name)
             st.write(file_path.read_text(encoding="utf-8"))
 
@@ -142,6 +157,38 @@ with st.sidebar:
                 }
             )
             st.success("X投稿案を作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("📷 Instagram投稿生成")
+
+    instagram_topic = st.text_input(
+        "Instagram投稿のテーマ",
+        placeholder="例: AI副業で最初にやること",
+        key="instagram_topic",
+    )
+
+    if st.button("Instagram投稿を作成"):
+        if not instagram_topic.strip():
+            st.warning("Instagram投稿のテーマを入力してください。")
+        else:
+            with st.spinner("Instagram投稿を作成中..."):
+                instagram_post = generate_instagram_post(
+                    client,
+                    instagram_topic.strip(),
+                )
+                save_instagram_post(
+                    instagram_topic.strip(),
+                    instagram_post,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"📷 Instagram投稿案\n\n{instagram_post}",
+                }
+            )
+            st.success("Instagram投稿案を作成・保存しました")
             st.rerun()
 
     st.divider()
