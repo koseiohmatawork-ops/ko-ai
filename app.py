@@ -48,6 +48,19 @@ def handle_memory_input(text: str) -> str | None:
 
 
 with st.sidebar:
+    st.header("📊 現在の状態")
+
+    memory_text = get_long_term_memory_text()
+    memory_count = len(memory_text.splitlines()) if memory_text else 0
+
+    st.write(f"🧠 長期記憶: {memory_count}件")
+
+    if st.session_state.pdf_text:
+        st.write("📄 PDFモード: ON")
+    else:
+        st.write("📄 PDFモード: OFF")
+
+    st.divider()
     st.header("📄 PDF読み込み")
 
     if st.button("会話をクリア"):
