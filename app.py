@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from modules.ai import ask_ko_ai
-from modules.memory import forget_text, remember_text, save_history
+from modules.memory import forget_text, get_long_term_memory_text, remember_text, save_history
 from modules.pdf_reader import ask_pdf_question, extract_text_from_pdf
 from modules.daily import get_daily_plan
 
@@ -63,6 +63,18 @@ with st.sidebar:
             }
         )
         st.rerun()
+
+    st.divider()
+
+    st.header("🧠 長期記憶")
+    memory_text = get_long_term_memory_text()
+
+    if memory_text:
+        st.text(memory_text)
+    else:
+        st.caption("まだ記憶はありません")
+
+    st.caption("例: 覚えて: 好きな食べ物はラーメン")
 
     st.divider()
 
