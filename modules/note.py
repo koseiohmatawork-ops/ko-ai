@@ -1,6 +1,9 @@
-
-
+from datetime import datetime
+from pathlib import Path
 from openai import OpenAI
+
+
+NOTE_ARTICLES_FILE = Path("note_articles.txt")
 
 
 def create_note_article(client: OpenAI, topic: str) -> str:
@@ -30,3 +33,14 @@ def create_note_article(client: OpenAI, topic: str) -> str:
     )
 
     return response.choices[0].message.content
+
+
+def save_note_article(topic: str, article: str) -> None:
+    """生成したnote記事案を保存する。"""
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with NOTE_ARTICLES_FILE.open("a", encoding="utf-8") as file:
+        file.write(f"\n[{now}] テーマ: {topic}\n")
+        file.write("-" * 50 + "\n")
+        file.write(article)
+        file.write("\n" + "=" * 50 + "\n")
