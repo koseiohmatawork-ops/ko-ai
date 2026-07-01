@@ -1,5 +1,9 @@
 # Ko AI 🤖
 
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
+![OpenAI](https://img.shields.io/badge/OpenAI-GPT--5-green)
+![License](https://img.shields.io/badge/License-Portfolio-lightgrey)
 
 Ko AI は、OpenAI API を利用した自分専用の AI アシスタントです。  
 ターミナル版とブラウザで使える GUI 版の両方に対応しています。
