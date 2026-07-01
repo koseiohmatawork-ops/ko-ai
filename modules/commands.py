@@ -2,6 +2,7 @@ from modules.config import COMMANDS
 from modules.daily import get_daily_plan
 from modules.memory import clear_history, save_history, save_memo, show_history, show_memos
 from modules.news import fetch_google_news, save_news_result, show_raw_news, summarize_news_for_sns
+from modules.note import create_note_article
 from modules.sns import (
     clear_drafts,
     create_instagram_draft,
@@ -38,6 +39,20 @@ def handle_command(client, user_input: str, command: str) -> tuple[bool, bool]:
 
     if command == "daily":
         print(f"\n{get_daily_plan()}")
+        return True, False
+
+    if command.startswith("note "):
+        topic = user_input[5:].strip()
+        if not topic:
+            print("\nnote記事のテーマを入力してください。例: note AI副業の始め方")
+            return True, False
+
+        article = create_note_article(client, topic)
+        print(f"\n📝 note記事案\n{'-' * 50}\n{article}\n{'-' * 50}")
+        return True, False
+
+    if command == "note":
+        print("\nnote記事のテーマを入力してください。例: note AI副業の始め方")
         return True, False
 
     if command == "history":
