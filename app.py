@@ -12,6 +12,7 @@ from modules.pdf_reader import ask_pdf_question, extract_text_from_pdf
 from modules.x_post import generate_x_post, save_x_post
 from modules.instagram_post import generate_instagram_post, save_instagram_post
 from modules.threads_post import generate_threads_post, save_threads_post
+from modules.image_prompt import generate_image_prompt, save_image_prompt
 from modules.idea_generator import generate_ideas, save_ideas
 
 load_dotenv()
@@ -45,6 +46,9 @@ if "instagram_topic" not in st.session_state:
 
 if "threads_topic" not in st.session_state:
     st.session_state.threads_topic = ""
+
+if "image_prompt_theme" not in st.session_state:
+    st.session_state.image_prompt_theme = ""
 
 if "idea_theme" not in st.session_state:
     st.session_state.idea_theme = ""
@@ -146,7 +150,7 @@ with st.sidebar:
         key="all_topic",
     )
 
-    if st.button("note・X・Instagramを全部作成"):
+    if st.button("note・X・Instagram・Threadsを全部作成"):
         if not all_topic.strip():
             st.warning("テーマを入力してください。")
         else:
@@ -159,6 +163,9 @@ with st.sidebar:
 
                 instagram_post = generate_instagram_post(client, all_topic.strip())
                 save_instagram_post(all_topic.strip(), instagram_post)
+
+                threads_post = generate_threads_post(client, all_topic.strip())
+                save_threads_post(all_topic.strip(), threads_post)
 
             all_result = f"""
 🚀 全部生成完了
@@ -178,6 +185,12 @@ with st.sidebar:
 📷 Instagram投稿案
 
 {instagram_post}
+
+---
+
+🧵 Threads投稿案
+
+{threads_post}
 """.strip()
 
             st.session_state.messages.append(
@@ -187,7 +200,7 @@ with st.sidebar:
                 }
             )
 
-            st.success("note・X・Instagramを作成・保存しました")
+            st.success("note・X・Instagram・Threadsを作成・保存しました")
             st.rerun()
 
     st.divider()
@@ -214,6 +227,38 @@ with st.sidebar:
                 }
             )
             st.success("アイデアを作成しました")
+            st.rerun()
+
+    st.divider()
+    st.header("🎨 画像プロンプト生成")
+
+    image_prompt_theme = st.text_input(
+        "画像プロンプトのテーマ",
+        placeholder="例: AI副業で最初にやること",
+        key="image_prompt_theme",
+    )
+
+    if st.button("画像プロンプトを作成"):
+        if not image_prompt_theme.strip():
+            st.warning("画像プロンプトのテーマを入力してください。")
+        else:
+            with st.spinner("画像プロンプトを作成中..."):
+                image_prompt = generate_image_prompt(
+                    client,
+                    image_prompt_theme.strip(),
+                )
+                save_image_prompt(
+                    image_prompt_theme.strip(),
+                    image_prompt,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"🎨 画像生成プロンプト\n\n{image_prompt}",
+                }
+            )
+            st.success("画像プロンプトを作成・保存しました")
             st.rerun()
 
     st.divider()
