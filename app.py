@@ -1,3 +1,6 @@
+import io
+import zipfile
+
 import streamlit as st
 from pathlib import Path
 from dotenv import load_dotenv
@@ -101,40 +104,97 @@ def show_post_stock() -> None:
         f"アイデア: {len(idea_files)}件"
     )
 
+    all_stock_files = note_files + x_files + instagram_files + threads_files + idea_files
+
+    if all_stock_files:
+        zip_buffer = io.BytesIO()
+
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for file_path in all_stock_files:
+                zip_file.write(file_path, arcname=str(file_path))
+
+        st.download_button(
+            "📦 投稿ストックをまとめてZIPダウンロード",
+            data=zip_buffer.getvalue(),
+            file_name="ko_ai_post_stock.zip",
+            mime="application/zip",
+            key="download_all_post_stock_zip",
+        )
+
     with st.expander("📝 note記事ストック"):
         if not note_files:
             st.caption("まだnote記事はありません")
         for file_path in note_files[:5]:
+            content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
-            st.write(file_path.read_text(encoding="utf-8"))
+            st.write(content)
+            st.download_button(
+                "📝 note記事をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_note_{file_path.name}",
+            )
 
+    
     with st.expander("🐦 X投稿ストック"):
         if not x_files:
             st.caption("まだX投稿はありません")
         for file_path in x_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
-            st.write(file_path.read_text(encoding="utf-8"))
+            st.write(content)
+            st.download_button(
+                "🐦 X投稿をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/plain",
+                key=f"download_x_{file_path.name}",
+        )
 
     with st.expander("📷 Instagram投稿ストック"):
         if not instagram_files:
             st.caption("まだInstagram投稿はありません")
         for file_path in instagram_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
-            st.write(file_path.read_text(encoding="utf-8"))
+            st.write(content)
+            st.download_button(
+                "📷 Instagram投稿をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_instagram_{file_path.name}",
+            )
 
     with st.expander("🧵 Threads投稿ストック"):
         if not threads_files:
             st.caption("まだThreads投稿はありません")
         for file_path in threads_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
-            st.write(file_path.read_text(encoding="utf-8"))
-
+            st.write(content)
+            st.download_button(
+                "🧵 Threads投稿をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/plain",
+                key=f"download_threads_{file_path.name}",
+            )
     with st.expander("💡 アイデアストック"):
         if not idea_files:
             st.caption("まだアイデアはありません")
         for file_path in idea_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
-            st.write(file_path.read_text(encoding="utf-8"))
+            st.write(content)
+            st.download_button(
+                "💡 アイデアをダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/plain",
+                key=f"download_idea_{file_path.name}",
+            )
 
 
 with st.sidebar:
