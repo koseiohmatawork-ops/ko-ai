@@ -75,6 +75,7 @@ http://localhost:8501
 
 - `help`：使えるコマンドを表示
 - `daily`：今日のAI作業メニューを表示
+- `check`：Ko AIの現在の状態を確認
 - `memo 内容`：メモを保存
 - `memos`：保存したメモを表示
 - `history`：会話履歴を表示
