@@ -1,11 +1,14 @@
 import streamlit as st
+from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from modules.ai import ask_ko_ai
-from modules.memory import forget_text, get_long_term_memory_text, remember_text, save_history
-from modules.pdf_reader import ask_pdf_question, extract_text_from_pdf
 from modules.daily import get_daily_plan
+from modules.memory import forget_text, get_long_term_memory_text, remember_text, save_history
+from modules.note import create_note_article, save_note_article
+from modules.pdf_reader import ask_pdf_question, extract_text_from_pdf
+from modules.x_post import generate_x_post, save_x_post
 
 load_dotenv()
 client = OpenAI()
@@ -23,6 +26,12 @@ if "pdf_text" not in st.session_state:
 
 if "pdf_name" not in st.session_state:
     st.session_state.pdf_name = ""
+
+if "note_topic" not in st.session_state:
+    st.session_state.note_topic = ""
+
+if "x_topic" not in st.session_state:
+    st.session_state.x_topic = ""
 
 
 def handle_memory_input(text: str) -> str | None:
@@ -47,6 +56,29 @@ def handle_memory_input(text: str) -> str | None:
     return None
 
 
+def show_post_stock() -> None:
+    st.header("📦 投稿ストック")
+
+    note_files = sorted(Path("posts/note").glob("*.md"), reverse=True)
+    x_files = sorted(Path("posts/x").glob("*.txt"), reverse=True)
+
+    st.caption(f"note記事: {len(note_files)}件 / X投稿: {len(x_files)}件")
+
+    with st.expander("📝 note記事ストック"):
+        if not note_files:
+            st.caption("まだnote記事はありません")
+        for file_path in note_files[:5]:
+            st.subheader(file_path.name)
+            st.write(file_path.read_text(encoding="utf-8"))
+
+    with st.expander("🐦 X投稿ストック"):
+        if not x_files:
+            st.caption("まだX投稿はありません")
+        for file_path in x_files[:10]:
+            st.subheader(file_path.name)
+            st.write(file_path.read_text(encoding="utf-8"))
+
+
 with st.sidebar:
     st.header("📊 現在の状態")
 
@@ -59,6 +91,61 @@ with st.sidebar:
         st.write("📄 PDFモード: ON")
     else:
         st.write("📄 PDFモード: OFF")
+
+    st.divider()
+    st.header("📝 note記事生成")
+
+    note_topic = st.text_input(
+        "note記事のテーマ",
+        placeholder="例: AI副業の始め方",
+        key="note_topic",
+    )
+
+    if st.button("note記事を作成"):
+        if not note_topic.strip():
+            st.warning("note記事のテーマを入力してください。")
+        else:
+            with st.spinner("note記事を作成中..."):
+                article = create_note_article(client, note_topic.strip())
+                save_note_article(note_topic.strip(), article)
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"📝 note記事案\n\n{article}",
+                }
+            )
+            st.success("note記事案を作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("🐦 X投稿生成")
+
+    x_topic = st.text_input(
+        "X投稿のテーマ",
+        placeholder="例: AI副業で最初にやること",
+        key="x_topic",
+    )
+
+    if st.button("X投稿を作成"):
+        if not x_topic.strip():
+            st.warning("X投稿のテーマを入力してください。")
+        else:
+            with st.spinner("X投稿を作成中..."):
+                x_post = generate_x_post(client, x_topic.strip())
+                save_x_post(x_topic.strip(), x_post)
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"🐦 X投稿案\n\n{x_post}",
+                }
+            )
+            st.success("X投稿案を作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    show_post_stock()
 
     st.divider()
     st.header("📄 PDF読み込み")

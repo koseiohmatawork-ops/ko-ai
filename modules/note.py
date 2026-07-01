@@ -1,9 +1,11 @@
 from datetime import datetime
 from pathlib import Path
+
 from openai import OpenAI
 
 
 NOTE_ARTICLES_FILE = Path("note_articles.txt")
+NOTE_POSTS_DIR = Path("posts/note")
 
 
 def create_note_article(client: OpenAI, topic: str) -> str:
@@ -36,7 +38,6 @@ def create_note_article(client: OpenAI, topic: str) -> str:
 
 
 def save_note_article(topic: str, article: str) -> None:
-    """生成したnote記事案を保存する。"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     with NOTE_ARTICLES_FILE.open("a", encoding="utf-8") as file:
@@ -44,3 +45,12 @@ def save_note_article(topic: str, article: str) -> None:
         file.write("-" * 50 + "\n")
         file.write(article)
         file.write("\n" + "=" * 50 + "\n")
+
+    NOTE_POSTS_DIR.mkdir(parents=True, exist_ok=True)
+    safe_topic = "".join(char if char.isalnum() else "_" for char in topic).strip("_")
+    filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_topic}.md"
+
+    (NOTE_POSTS_DIR / filename).write_text(
+        f"# {topic}\n\n{article}\n",
+        encoding="utf-8",
+    )
