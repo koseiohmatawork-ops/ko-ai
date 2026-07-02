@@ -121,7 +121,10 @@ def show_post_stock() -> None:
     idea_files = sorted(Path("posts/ideas").glob("*.txt"), reverse=True)
     reviewed_files = sorted(Path("posts/reviewed").glob("*.md"), reverse=True)
     monetization_files = sorted(Path("posts/monetization").glob("*.md"), reverse=True)
-    paid_note_outline_files = sorted(Path("posts/paid_note_outlines").glob("*.md"), reverse=True)
+    paid_note_outline_files = sorted(
+        Path("posts/paid_note_outlines").glob("*.md"), reverse=True
+    )
+    calendar_files = sorted(Path("posts/calendars").glob("*.md"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -148,6 +151,7 @@ def show_post_stock() -> None:
         paid_note_outline_files = [
             file_path for file_path in paid_note_outline_files if match_file(file_path)
         ]
+        calendar_files = [file_path for file_path in calendar_files if match_file(file_path)]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
@@ -156,7 +160,8 @@ def show_post_stock() -> None:
         f"アイデア: {len(idea_files)}件 / "
         f"改善済み投稿: {len(reviewed_files)}件 / "
         f"収益導線案: {len(monetization_files)}件 / "
-        f"有料note構成案: {len(paid_note_outline_files)}件"
+        f"有料note構成案: {len(paid_note_outline_files)}件 / "
+        f"投稿カレンダー: {len(calendar_files)}件"
     )
     
 
@@ -169,6 +174,7 @@ def show_post_stock() -> None:
         + reviewed_files
         + monetization_files
         + paid_note_outline_files
+        + calendar_files
     )
 
     if all_stock_files:
@@ -303,6 +309,21 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_paid_note_outline_{file_path.name}",
+            )
+
+    with st.expander("📅 投稿カレンダーストック"):
+        if not calendar_files:
+            st.caption("まだ投稿カレンダーはありません")
+        for file_path in calendar_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "📅 投稿カレンダーをダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_calendar_{file_path.name}",
             )
 
 with st.sidebar:
