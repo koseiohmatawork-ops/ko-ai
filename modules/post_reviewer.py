@@ -108,3 +108,41 @@ def save_reviewed_post(platform: str, original_post: str, improved_post: str) ->
 
     file_path.write_text(content, encoding="utf-8")
     return file_path
+
+def create_monetization_plan(client: OpenAI, post_text: str, platform: str = "SNS") -> str:
+    """投稿から収益化につながる導線案を作る。"""
+    prompt = f"""
+あなたはSNS運用とコンテンツ販売に強いマーケターです。
+以下の投稿を、{platform}向けに収益化へつなげる導線を考えてください。
+
+【目的】
+投稿を見た人が、保存・フォロー・プロフィール閲覧・note購入・無料相談・商品購入などの次の行動を取りやすくすること。
+
+【出力形式】
+1. この投稿で狙える読者層
+2. 読者の悩み・欲求
+3. 自然に入れられるCTAを3つ
+4. 無料特典のアイデアを3つ
+5. 有料note・商品化できるテーマを3つ
+6. 投稿の最後に入れるおすすめ導線文
+7. 収益化につなげるための次の一手
+
+【投稿】
+{post_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "あなたはSNS発信を収益化につなげるマーケターです。押し売りではなく、自然な導線を提案してください。",
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+    )
+
+    return response.choices[0].message.content or "収益導線を作成できませんでした。"

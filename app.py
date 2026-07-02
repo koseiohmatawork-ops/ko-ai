@@ -20,7 +20,12 @@ from modules.news_analyzer import analyze_news, select_best_news
 from modules.news_fetcher import fetch_ai_news
 from modules.article_fetcher import fetch_article
 from modules.idea_generator import generate_ideas, save_ideas
-from modules.post_reviewer import improve_post, review_post, save_reviewed_post
+from modules.post_reviewer import (
+    create_monetization_plan,
+    improve_post,
+    review_post,
+    save_reviewed_post,
+)
 
 load_dotenv()
 client = OpenAI()
@@ -739,7 +744,7 @@ with st.sidebar:
                     platform,
                     review_text.strip(),
                     improved_post,
-            )
+                )
 
             st.session_state.messages.append(
                 {
@@ -748,6 +753,26 @@ with st.sidebar:
                 }
             )
             st.success("投稿の改善と保存が完了しました")
+            st.rerun()
+
+    if st.button("収益導線を作成"):
+        if not review_text.strip():
+            st.warning("収益導線を作りたい投稿を入力してください。")
+        else:
+            with st.spinner("収益導線を作成中..."):
+                monetization_plan = create_monetization_plan(
+                    client,
+                    review_text.strip(),
+                    platform,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"💰 収益導線案\n\n{monetization_plan}",
+                }
+            )
+            st.success("収益導線を作成しました")
             st.rerun()
 
     st.divider()
