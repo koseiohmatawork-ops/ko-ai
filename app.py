@@ -20,7 +20,7 @@ from modules.news_analyzer import analyze_news, select_best_news
 from modules.news_fetcher import fetch_ai_news
 from modules.article_fetcher import fetch_article
 from modules.idea_generator import generate_ideas, save_ideas
-from modules.post_reviewer import review_post
+from modules.post_reviewer import improve_post, review_post
 
 load_dotenv()
 client = OpenAI()
@@ -697,6 +697,22 @@ with st.sidebar:
                 }
             )
             st.success("投稿の採点が完了しました")
+            st.rerun()
+
+    if st.button("投稿を改善"):
+        if not review_text.strip():
+            st.warning("改善したい投稿を入力してください。")
+        else:
+            with st.spinner("投稿を改善中..."):
+                improved_post = improve_post(client, review_text.strip())
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"✨ 投稿改善結果\n\n{improved_post}",
+                }
+            )
+            st.success("投稿の改善が完了しました")
             st.rerun()
 
     st.divider()
