@@ -26,6 +26,7 @@ from modules.post_reviewer import (
     improve_post,
     review_post,
     save_monetization_plan,
+    save_paid_note_outline,
     save_reviewed_post,
 )
 
@@ -117,6 +118,7 @@ def show_post_stock() -> None:
     idea_files = sorted(Path("posts/ideas").glob("*.txt"), reverse=True)
     reviewed_files = sorted(Path("posts/reviewed").glob("*.md"), reverse=True)
     monetization_files = sorted(Path("posts/monetization").glob("*.md"), reverse=True)
+    paid_note_outline_files = sorted(Path("posts/paid_note_outlines").glob("*.md"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -140,6 +142,9 @@ def show_post_stock() -> None:
         monetization_files = [
             file_path for file_path in monetization_files if match_file(file_path)
         ]
+        paid_note_outline_files = [
+        file_path for file_path in paid_note_outline_files if match_file(file_path)
+        ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
@@ -147,8 +152,10 @@ def show_post_stock() -> None:
         f"Threads投稿: {len(threads_files)}件 / "
         f"アイデア: {len(idea_files)}件 / "
         f"改善済み投稿: {len(reviewed_files)}件 / "
-        f"収益導線案: {len(monetization_files)}件"
+        f"収益導線案: {len(monetization_files)}件 / "
+        f"有料note構成案: {len(paid_note_outline_files)}件"
     )
+    
 
     all_stock_files = (
         note_files
@@ -158,6 +165,7 @@ def show_post_stock() -> None:
         + idea_files
         + reviewed_files
         + monetization_files
+        + paid_note_outline_files
     )
 
     if all_stock_files:
@@ -279,6 +287,20 @@ def show_post_stock() -> None:
                 key=f"download_monetization_{file_path.name}",
             )
 
+    with st.expander("📝 有料note構成ストック"):
+        if not paid_note_outline_files:
+         st.caption("まだ有料note構成案はありません")
+        for file_path in paid_note_outline_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "📝 有料note構成案をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_paid_note_outline_{file_path.name}",
+            )
 
 with st.sidebar:
     st.header("📊 現在の状態")
@@ -813,14 +835,19 @@ with st.sidebar:
                     review_text.strip(),
                     platform,
                 )
+                saved_path = save_paid_note_outline(
+                    platform,
+                    review_text.strip(),
+                    paid_note_outline,
+                )
 
             st.session_state.messages.append(
                 {
                     "role": "assistant",
-                    "content": f"📝 有料note構成案\n\n{paid_note_outline}",
+                    "content": f"📝 有料note構成案\n\n{paid_note_outline}\n\n保存先: {saved_path}",
                 }
             )
-            st.success("有料note構成を作成しました")
+            st.success("有料note構成を作成・保存しました")
             st.rerun()
 
     st.divider()
