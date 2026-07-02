@@ -20,7 +20,7 @@ from modules.news_analyzer import analyze_news, select_best_news
 from modules.news_fetcher import fetch_ai_news
 from modules.article_fetcher import fetch_article
 from modules.idea_generator import generate_ideas, save_ideas
-from modules.post_reviewer import improve_post, review_post
+from modules.post_reviewer import improve_post, review_post, save_reviewed_post
 
 load_dotenv()
 client = OpenAI()
@@ -108,6 +108,7 @@ def show_post_stock() -> None:
     instagram_files = sorted(Path("posts/instagram").glob("*.md"), reverse=True)
     threads_files = sorted(Path("posts/threads").glob("*.txt"), reverse=True)
     idea_files = sorted(Path("posts/ideas").glob("*.txt"), reverse=True)
+    reviewed_files = sorted(Path("posts/reviewed").glob("*.md"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -125,16 +126,26 @@ def show_post_stock() -> None:
             file_path for file_path in threads_files if match_file(file_path)
         ]
         idea_files = [file_path for file_path in idea_files if match_file(file_path)]
-
+        reviewed_files = [
+            file_path for file_path in reviewed_files if match_file(file_path)
+        ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
         f"Instagram投稿: {len(instagram_files)}件 / "
         f"Threads投稿: {len(threads_files)}件 / "
-        f"アイデア: {len(idea_files)}件"
+        f"アイデア: {len(idea_files)}件 / "
+        f"改善済み投稿: {len(reviewed_files)}件"
     )
 
-    all_stock_files = note_files + x_files + instagram_files + threads_files + idea_files
+    all_stock_files = (
+        note_files
+        + x_files
+        + instagram_files
+        + threads_files
+        + idea_files
+        + reviewed_files
+    )
 
     if all_stock_files:
         zip_buffer = io.BytesIO()
@@ -224,6 +235,20 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/plain",
                 key=f"download_idea_{file_path.name}",
+            )
+    with st.expander("✨ 改善済み投稿ストック"):
+        if not reviewed_files:
+            st.caption("まだ改善済み投稿はありません")
+        for file_path in reviewed_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "✨ 改善済み投稿をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_reviewed_{file_path.name}",
             )
 
 
@@ -710,14 +735,19 @@ with st.sidebar:
         else:
             with st.spinner("投稿を改善中..."):
                 improved_post = improve_post(client, review_text.strip(), platform)
+                saved_path = save_reviewed_post(
+                    platform,
+                    review_text.strip(),
+                    improved_post,
+            )
 
             st.session_state.messages.append(
                 {
                     "role": "assistant",
-                    "content": f"✨ 投稿改善結果\n\n{improved_post}",
+                    "content": f"✨ 投稿改善結果\n\n{improved_post}\n\n保存先: {saved_path}",
                 }
             )
-            st.success("投稿の改善が完了しました")
+            st.success("投稿の改善と保存が完了しました")
             st.rerun()
 
     st.divider()

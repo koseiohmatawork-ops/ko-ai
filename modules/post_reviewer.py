@@ -1,3 +1,6 @@
+from datetime import datetime
+from pathlib import Path
+
 from openai import OpenAI
 
 
@@ -81,3 +84,27 @@ def improve_post(client: OpenAI, post_text: str, platform: str = "SNS") -> str:
     )
 
     return response.choices[0].message.content or "投稿を改善できませんでした。"
+
+def save_reviewed_post(platform: str, original_post: str, improved_post: str) -> Path:
+    """改善した投稿をストックとして保存する。"""
+    save_dir = Path("posts/reviewed")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_{platform}_reviewed.md"
+
+    content = f"""
+# 改善済み投稿
+
+## 投稿先
+{platform}
+
+## 元の投稿
+{original_post}
+
+## 改善後の投稿
+{improved_post}
+""".strip()
+
+    file_path.write_text(content, encoding="utf-8")
+    return file_path
