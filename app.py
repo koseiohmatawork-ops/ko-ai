@@ -20,6 +20,7 @@ from modules.news_analyzer import analyze_news, select_best_news
 from modules.news_fetcher import fetch_ai_news
 from modules.article_fetcher import fetch_article
 from modules.idea_generator import generate_ideas, save_ideas
+from modules.post_reviewer import review_post
 
 load_dotenv()
 client = OpenAI()
@@ -65,6 +66,12 @@ if "latest_news" not in st.session_state:
 if "idea_theme" not in st.session_state:
     st.session_state.idea_theme = ""
 
+if "stock_search_keyword" not in st.session_state:
+    st.session_state.stock_search_keyword = ""
+
+if "review_text" not in st.session_state:
+    st.session_state.review_text = ""
+
 def handle_memory_input(text: str) -> str | None:
     text = text.strip()
 
@@ -90,11 +97,34 @@ def handle_memory_input(text: str) -> str | None:
 def show_post_stock() -> None:
     st.header("📦 投稿ストック")
 
+    search_keyword = st.text_input(
+        "投稿ストック検索",
+        placeholder="例: AI副業",
+        key="stock_search_keyword",
+    )
+
     note_files = sorted(Path("posts/note").glob("*.md"), reverse=True)
     x_files = sorted(Path("posts/x").glob("*.txt"), reverse=True)
     instagram_files = sorted(Path("posts/instagram").glob("*.md"), reverse=True)
     threads_files = sorted(Path("posts/threads").glob("*.txt"), reverse=True)
     idea_files = sorted(Path("posts/ideas").glob("*.txt"), reverse=True)
+
+    if search_keyword.strip():
+        keyword = search_keyword.strip().lower()
+
+        def match_file(file_path: Path) -> bool:
+            content = file_path.read_text(encoding="utf-8").lower()
+            return keyword in file_path.name.lower() or keyword in content
+
+        note_files = [file_path for file_path in note_files if match_file(file_path)]
+        x_files = [file_path for file_path in x_files if match_file(file_path)]
+        instagram_files = [
+            file_path for file_path in instagram_files if match_file(file_path)
+        ]
+        threads_files = [
+            file_path for file_path in threads_files if match_file(file_path)
+        ]
+        idea_files = [file_path for file_path in idea_files if match_file(file_path)]
 
     st.caption(
         f"note記事: {len(note_files)}件 / "
@@ -150,7 +180,7 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/plain",
                 key=f"download_x_{file_path.name}",
-        )
+            )
 
     with st.expander("📷 Instagram投稿ストック"):
         if not instagram_files:
@@ -641,6 +671,32 @@ with st.sidebar:
                 }
             )
             st.success("Threads投稿案を作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("🔥 投稿採点")
+
+    review_text = st.text_area(
+        "採点したい投稿",
+        placeholder="ここにnote、X、Instagram、Threadsの投稿を貼る",
+        key="review_text",
+        height=180,
+    )
+
+    if st.button("投稿を採点"):
+        if not review_text.strip():
+            st.warning("採点したい投稿を入力してください。")
+        else:
+            with st.spinner("投稿を採点中..."):
+                review_result = review_post(client, review_text.strip())
+                
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"🔥 投稿採点結果\n\n{review_result}",
+                }
+            )
+            st.success("投稿の採点が完了しました")
             st.rerun()
 
     st.divider()
