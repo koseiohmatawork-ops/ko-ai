@@ -1,11 +1,11 @@
 from openai import OpenAI
 
 
-def review_post(client: OpenAI, post_text: str) -> str:
+def review_post(client: OpenAI, post_text: str, platform: str = "SNS") -> str:
     """投稿内容を採点し、改善案を返す。"""
     prompt = f"""
 あなたはSNS投稿とnote記事の編集者です。
-以下の投稿を、収益化・拡散・読みやすさの観点で採点してください。
+以下の投稿を、{platform}向けとして、収益化・拡散・読みやすさの観点で採点してください。
 
 【採点ルール】
 - 総合点を100点満点で出す
@@ -43,11 +43,11 @@ def review_post(client: OpenAI, post_text: str) -> str:
     return response.choices[0].message.content or "投稿を採点できませんでした。"
 
 
-def improve_post(client: OpenAI, post_text: str) -> str:
+def improve_post(client: OpenAI, post_text: str, platform: str = "SNS") -> str:
     """投稿内容を、より伸びやすく収益化につながる形に改善する。"""
     prompt = f"""
 あなたはSNS投稿とnote記事の編集者です。
-以下の投稿を、より読まれやすく、保存・拡散・収益化につながりやすい形に改善してください。
+以下の投稿を、{platform}向けに、より読まれやすく、保存・拡散・収益化につながりやすい形に改善してください。
 
 【改善ルール】
 - 冒頭で読む理由を強くする

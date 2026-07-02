@@ -676,6 +676,11 @@ with st.sidebar:
     st.divider()
     st.header("🔥 投稿採点")
 
+    platform = st.selectbox(
+        "投稿先を選んでください",
+        ["X", "Instagram", "note", "TikTok", "YouTube Shorts"],
+    )
+
     review_text = st.text_area(
         "採点したい投稿",
         placeholder="ここにnote、X、Instagram、Threadsの投稿を貼る",
@@ -688,7 +693,7 @@ with st.sidebar:
             st.warning("採点したい投稿を入力してください。")
         else:
             with st.spinner("投稿を採点中..."):
-                review_result = review_post(client, review_text.strip())
+                review_result = review_post(client, review_text.strip(), platform)
                 
             st.session_state.messages.append(
                 {
@@ -704,7 +709,7 @@ with st.sidebar:
             st.warning("改善したい投稿を入力してください。")
         else:
             with st.spinner("投稿を改善中..."):
-                improved_post = improve_post(client, review_text.strip())
+                improved_post = improve_post(client, review_text.strip(), platform)
 
             st.session_state.messages.append(
                 {
