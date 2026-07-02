@@ -24,6 +24,7 @@ from modules.post_reviewer import (
     create_monetization_plan,
     improve_post,
     review_post,
+    save_monetization_plan,
     save_reviewed_post,
 )
 
@@ -114,6 +115,7 @@ def show_post_stock() -> None:
     threads_files = sorted(Path("posts/threads").glob("*.txt"), reverse=True)
     idea_files = sorted(Path("posts/ideas").glob("*.txt"), reverse=True)
     reviewed_files = sorted(Path("posts/reviewed").glob("*.md"), reverse=True)
+    monetization_files = sorted(Path("posts/monetization").glob("*.md"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -134,13 +136,17 @@ def show_post_stock() -> None:
         reviewed_files = [
             file_path for file_path in reviewed_files if match_file(file_path)
         ]
+        monetization_files = [
+            file_path for file_path in monetization_files if match_file(file_path)
+        ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
         f"Instagram投稿: {len(instagram_files)}件 / "
         f"Threads投稿: {len(threads_files)}件 / "
         f"アイデア: {len(idea_files)}件 / "
-        f"改善済み投稿: {len(reviewed_files)}件"
+        f"改善済み投稿: {len(reviewed_files)}件 / "
+        f"収益導線案: {len(monetization_files)}件"
     )
 
     all_stock_files = (
@@ -150,6 +156,7 @@ def show_post_stock() -> None:
         + threads_files
         + idea_files
         + reviewed_files
+        + monetization_files
     )
 
     if all_stock_files:
@@ -254,6 +261,21 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_reviewed_{file_path.name}",
+            )
+
+    with st.expander("💰 収益導線ストック"):
+        if not monetization_files:
+            st.caption("まだ収益導線案はありません")
+        for file_path in monetization_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "💰 収益導線案をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_monetization_{file_path.name}",
             )
 
 
@@ -765,14 +787,19 @@ with st.sidebar:
                     review_text.strip(),
                     platform,
                 )
+                saved_path = save_monetization_plan(
+                    platform,
+                    review_text.strip(),
+                    monetization_plan,
+                )
 
             st.session_state.messages.append(
                 {
                     "role": "assistant",
-                    "content": f"💰 収益導線案\n\n{monetization_plan}",
+                    "content": f"💰 収益導線案\n\n{monetization_plan}\n\n保存先: {saved_path}",
                 }
             )
-            st.success("収益導線を作成しました")
+            st.success("収益導線を作成・保存しました")
             st.rerun()
 
     st.divider()

@@ -146,3 +146,27 @@ def create_monetization_plan(client: OpenAI, post_text: str, platform: str = "SN
     )
 
     return response.choices[0].message.content or "収益導線を作成できませんでした。"
+
+def save_monetization_plan(platform: str, original_post: str, monetization_plan: str) -> Path:
+    """収益導線案をストックとして保存する。"""
+    save_dir = Path("posts/monetization")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_{platform}_monetization.md"
+
+    content = f"""
+# 収益導線案
+
+## 投稿先
+{platform}
+
+## 元の投稿
+{original_post}
+
+## 収益導線案
+{monetization_plan}
+""".strip()
+
+    file_path.write_text(content, encoding="utf-8")
+    return file_path
