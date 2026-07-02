@@ -22,6 +22,7 @@ from modules.article_fetcher import fetch_article
 from modules.idea_generator import generate_ideas, save_ideas
 from modules.post_reviewer import (
     create_monetization_plan,
+    create_paid_note_outline,
     improve_post,
     review_post,
     save_monetization_plan,
@@ -800,6 +801,26 @@ with st.sidebar:
                 }
             )
             st.success("収益導線を作成・保存しました")
+            st.rerun()
+
+    if st.button("有料note構成を作成"):
+        if not review_text.strip():
+            st.warning("有料note構成を作りたい投稿を入力してください。")
+        else:
+            with st.spinner("有料note構成を作成中..."):
+                paid_note_outline = create_paid_note_outline(
+                    client,
+                    review_text.strip(),
+                    platform,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"📝 有料note構成案\n\n{paid_note_outline}",
+                }
+            )
+            st.success("有料note構成を作成しました")
             st.rerun()
 
     st.divider()

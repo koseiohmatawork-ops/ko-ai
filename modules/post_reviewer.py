@@ -170,3 +170,44 @@ def save_monetization_plan(platform: str, original_post: str, monetization_plan:
 
     file_path.write_text(content, encoding="utf-8")
     return file_path
+
+def create_paid_note_outline(client: OpenAI, post_text: str, platform: str = "SNS") -> str:
+    """投稿内容から有料noteの構成案を作る。"""
+    prompt = f"""
+あなたは有料note、コンテンツ販売、SNS導線設計に強い編集者です。
+以下の{platform}投稿をもとに、有料noteとして販売できる構成案を作ってください。
+
+【目的】
+SNS投稿で興味を持った読者が、もっと詳しく知りたいと思って購入したくなる有料noteの設計を作ること。
+
+【出力形式】
+1. 有料noteのタイトル案を5つ
+2. 想定読者
+3. 読者の悩み
+4. このnoteで得られる結果
+5. 章立て案
+6. 無料部分に書く内容
+7. 有料部分に書く内容
+8. 価格帯の目安
+9. 販売ページの一言コピー
+10. SNS投稿からnoteへ誘導する文章
+
+【元の投稿】
+{post_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "あなたは有料noteの構成作成と販売導線に強い編集者です。初心者でもそのまま作れる具体的な構成にしてください。",
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+    )
+
+    return response.choices[0].message.content or "有料note構成案を作成できませんでした。"
