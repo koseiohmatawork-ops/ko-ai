@@ -143,7 +143,7 @@ def show_post_stock() -> None:
             file_path for file_path in monetization_files if match_file(file_path)
         ]
         paid_note_outline_files = [
-        file_path for file_path in paid_note_outline_files if match_file(file_path)
+            file_path for file_path in paid_note_outline_files if match_file(file_path)
         ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
@@ -289,7 +289,7 @@ def show_post_stock() -> None:
 
     with st.expander("📝 有料note構成ストック"):
         if not paid_note_outline_files:
-         st.caption("まだ有料note構成案はありません")
+            st.caption("まだ有料note構成案はありません")
         for file_path in paid_note_outline_files[:10]:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
@@ -848,6 +848,72 @@ with st.sidebar:
                 }
             )
             st.success("有料note構成を作成・保存しました")
+            st.rerun()
+
+    if st.button("販売導線をまとめて作成"):
+        if not review_text.strip():
+            st.warning("販売導線を作りたい投稿を入力してください。")
+        else:
+            with st.spinner("販売導線をまとめて作成中..."):
+                improved_post = improve_post(client, review_text.strip(), platform)
+                reviewed_path = save_reviewed_post(
+                    platform,
+                    review_text.strip(),
+                    improved_post,
+                )
+
+                monetization_plan = create_monetization_plan(
+                    client,
+                    improved_post,
+                    platform,
+                )
+                monetization_path = save_monetization_plan(
+                    platform,
+                    improved_post,
+                    monetization_plan,
+                )
+
+                paid_note_outline = create_paid_note_outline(
+                    client,
+                    improved_post,
+                    platform,
+                )
+                paid_note_outline_path = save_paid_note_outline(
+                    platform,
+                    improved_post,
+                    paid_note_outline,
+                )
+
+            funnel_result = f"""
+🚀 販売導線まとめ
+
+## 1. 改善後の投稿
+{improved_post}
+
+保存先: {reviewed_path}
+
+---
+
+## 2. 収益導線案
+{monetization_plan}
+
+保存先: {monetization_path}
+
+---
+
+## 3. 有料note構成案
+{paid_note_outline}
+
+保存先: {paid_note_outline_path}
+""".strip()
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": funnel_result,
+                }
+            )
+            st.success("販売導線をまとめて作成・保存しました")
             st.rerun()
 
     st.divider()
