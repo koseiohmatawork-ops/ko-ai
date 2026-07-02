@@ -29,7 +29,12 @@ from modules.post_reviewer import (
     save_paid_note_outline,
     save_reviewed_post,
 )
-from modules.post_calendar import create_post_calendar, save_post_calendar
+from modules.post_calendar import (
+    create_post_calendar,
+    create_weekly_posts,
+    save_post_calendar,
+    save_weekly_posts,
+)
 
 load_dotenv()
 client = OpenAI()
@@ -810,6 +815,38 @@ with st.sidebar:
                 }
             )
             st.success("7日分投稿カレンダーを作成・保存しました")
+            st.rerun()
+
+    weekly_posts_source = st.text_area(
+        "実投稿に変換したい投稿カレンダー",
+        placeholder="ここに作成済みの7日分投稿カレンダーを貼る",
+        key="weekly_posts_source",
+        height=180,
+    )
+
+    if st.button("7日分の実投稿を作成"):
+        if not weekly_posts_source.strip():
+            st.warning("実投稿に変換したい投稿カレンダーを入力してください。")
+        else:
+            with st.spinner("7日分の実投稿を作成中..."):
+                weekly_posts = create_weekly_posts(
+                    client,
+                    weekly_posts_source.strip(),
+                    calendar_platform,
+                )
+                saved_path = save_weekly_posts(
+                    calendar_theme.strip() or "投稿カレンダー",
+                    calendar_platform,
+                    weekly_posts,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"📝 7日分実投稿\n\n{weekly_posts}\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("7日分の実投稿を作成・保存しました")
             st.rerun()
 
     st.divider()
