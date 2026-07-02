@@ -29,6 +29,7 @@ from modules.post_reviewer import (
     save_paid_note_outline,
     save_reviewed_post,
 )
+from modules.post_calendar import create_post_calendar, save_post_calendar
 
 load_dotenv()
 client = OpenAI()
@@ -80,6 +81,8 @@ if "stock_search_keyword" not in st.session_state:
 if "review_text" not in st.session_state:
     st.session_state.review_text = ""
 
+if "calendar_theme" not in st.session_state:
+    st.session_state.calendar_theme = ""
 def handle_memory_input(text: str) -> str | None:
     text = text.strip()
 
@@ -746,6 +749,46 @@ with st.sidebar:
                 }
             )
             st.success("Threads投稿案を作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("📅 投稿カレンダー生成")
+
+    calendar_platform = st.selectbox(
+        "投稿カレンダーの投稿先",
+        ["X", "Instagram", "note", "TikTok", "YouTube Shorts"],
+        key="calendar_platform",
+    )
+
+    calendar_theme = st.text_input(
+        "投稿カレンダーのテーマ",
+        placeholder="例: AI副業初心者向け",
+        key="calendar_theme",
+    )
+
+    if st.button("7日分投稿カレンダーを作成"):
+        if not calendar_theme.strip():
+            st.warning("投稿カレンダーのテーマを入力してください。")
+        else:
+            with st.spinner("7日分投稿カレンダーを作成中..."):
+                post_calendar = create_post_calendar(
+                    client,
+                    calendar_theme.strip(),
+                    calendar_platform,
+                )
+                saved_path = save_post_calendar(
+                    calendar_theme.strip(),
+                    calendar_platform,
+                    post_calendar,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"📅 7日分投稿カレンダー\n\n{post_calendar}\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("7日分投稿カレンダーを作成・保存しました")
             st.rerun()
 
     st.divider()
