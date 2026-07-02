@@ -130,6 +130,7 @@ def show_post_stock() -> None:
         Path("posts/paid_note_outlines").glob("*.md"), reverse=True
     )
     calendar_files = sorted(Path("posts/calendars").glob("*.md"), reverse=True)
+    weekly_post_files = sorted(Path("posts/weekly_posts").glob("*.md"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -156,7 +157,12 @@ def show_post_stock() -> None:
         paid_note_outline_files = [
             file_path for file_path in paid_note_outline_files if match_file(file_path)
         ]
-        calendar_files = [file_path for file_path in calendar_files if match_file(file_path)]
+        calendar_files = [
+            file_path for file_path in calendar_files if match_file(file_path)
+        ]
+        weekly_post_files = [
+            file_path for file_path in weekly_post_files if match_file(file_path)
+        ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
@@ -166,7 +172,8 @@ def show_post_stock() -> None:
         f"改善済み投稿: {len(reviewed_files)}件 / "
         f"収益導線案: {len(monetization_files)}件 / "
         f"有料note構成案: {len(paid_note_outline_files)}件 / "
-        f"投稿カレンダー: {len(calendar_files)}件"
+        f"投稿カレンダー: {len(calendar_files)}件 / "
+        f"7日分実投稿: {len(weekly_post_files)}件"
     )
     
 
@@ -180,6 +187,7 @@ def show_post_stock() -> None:
         + monetization_files
         + paid_note_outline_files
         + calendar_files
+        + weekly_post_files
     )
 
     if all_stock_files:
@@ -329,6 +337,21 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_calendar_{file_path.name}",
+            )
+
+    with st.expander("📝 7日分実投稿ストック"):
+        if not weekly_post_files:
+            st.caption("まだ7日分実投稿はありません")
+        for file_path in weekly_post_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "📝 7日分実投稿をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_weekly_posts_{file_path.name}",
             )
 
 with st.sidebar:
