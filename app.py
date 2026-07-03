@@ -223,6 +223,7 @@ def show_post_stock() -> None:
         + today_menu_files
         + stock_analysis_files
         + freebie_files
+        + paid_note_draft_files
     )
 
     if all_stock_files:
@@ -1187,6 +1188,26 @@ with st.sidebar:
                     paid_note_outline,
                 )
 
+                freebie_text = create_freebie(
+                    client,
+                    improved_post,
+                    platform,
+                )
+                freebie_path = save_freebie(
+                    "sales_funnel",
+                    platform,
+                    freebie_text,
+                )
+
+                paid_note_draft = create_paid_note_draft(
+                    client,
+                    paid_note_outline,
+                )
+                paid_note_draft_path = save_paid_note_draft(
+                    platform,
+                    paid_note_draft,
+                )
+
             funnel_result = f"""
 🚀 販売導線まとめ
 
@@ -1208,6 +1229,20 @@ with st.sidebar:
 {paid_note_outline}
 
 保存先: {paid_note_outline_path}
+
+---
+
+## 4. 無料特典案
+{freebie_text}
+
+保存先: {freebie_path}
+
+---
+
+## 5. 有料note本文ドラフト
+{paid_note_draft}
+
+保存先: {paid_note_draft_path}
 """.strip()
 
             st.session_state.messages.append(
@@ -1216,7 +1251,7 @@ with st.sidebar:
                     "content": funnel_result,
                 }
             )
-            st.success("販売導線をまとめて作成・保存しました")
+            st.success("販売導線・無料特典・有料note本文をまとめて作成・保存しました")
             st.rerun()
 
     st.divider()
