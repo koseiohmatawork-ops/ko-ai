@@ -35,9 +35,12 @@ from modules.post_calendar import (
     save_post_calendar,
     save_weekly_posts,
 )
+
 from modules.today_menu import (
+    create_stock_analysis,
     create_today_post_menu,
     load_recent_stock,
+    save_stock_analysis,
     save_today_post_menu,
 )
 
@@ -409,6 +412,24 @@ with st.sidebar:
             }
         )
         st.success("今日の投稿メニューを作成・保存しました")
+        st.rerun()
+
+        st.divider()
+    st.header("📊 投稿ストック分析")
+
+    if st.button("投稿ストックを分析"):
+        with st.spinner("保存済みストックを分析中..."):
+            stock_text = load_recent_stock(max_chars=9000)
+            stock_analysis = create_stock_analysis(client, stock_text)
+            saved_path = save_stock_analysis(stock_analysis)
+
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": f"📊 投稿ストック分析\n\n{stock_analysis}\n\n保存先: {saved_path}",
+            }
+        )
+        st.success("投稿ストック分析を作成・保存しました")
         st.rerun()
 
     st.divider()

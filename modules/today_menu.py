@@ -109,3 +109,60 @@ def save_today_post_menu(today_menu: str) -> Path:
 
     file_path.write_text(content, encoding="utf-8")
     return file_path
+
+def create_stock_analysis(client: OpenAI, stock_text: str) -> str:
+    """保存済み投稿ストックを分析し、収益化候補を出す。"""
+    prompt = f"""
+あなたはSNS運用とコンテンツ販売に強い編集者です。
+以下の保存済み投稿ストックを分析し、収益化につながりやすい投稿や次に伸ばすべき方向性を整理してください。
+
+【目的】
+保存した投稿をただ貯めるだけでなく、どの投稿を使えばフォロー・保存・note購入・無料特典・有料コンテンツ販売につながりやすいか判断すること。
+
+【出力形式】
+1. 今あるストック全体の傾向
+2. 収益化に使いやすい投稿テーマTOP5
+3. 有料note化しやすいテーマTOP5
+4. 無料特典にしやすいテーマTOP5
+5. 今日すぐ使うべき投稿
+6. 伸ばすために足りない投稿タイプ
+7. 次に作るべき投稿テーマ10個
+8. 収益化に向けた次の行動
+
+【保存済み投稿ストック】
+{stock_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "あなたは保存済みのSNS投稿ストックを分析し、収益化につなげる編集長です。実用的に判断してください。",
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+    )
+
+    return response.choices[0].message.content or "投稿ストック分析を作成できませんでした。"
+
+
+def save_stock_analysis(stock_analysis: str) -> Path:
+    """投稿ストック分析を保存する。"""
+    save_dir = Path("posts/stock_analysis")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_stock_analysis.md"
+
+    content = f"""
+# 投稿ストック分析
+
+{stock_analysis}
+""".strip()
+
+    file_path.write_text(content, encoding="utf-8")
+    return file_path
