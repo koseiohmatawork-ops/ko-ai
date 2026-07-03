@@ -23,11 +23,13 @@ from modules.idea_generator import generate_ideas, save_ideas
 from modules.post_reviewer import (
     create_freebie,
     create_monetization_plan,
+    create_paid_note_draft,
     create_paid_note_outline,
     improve_post,
     review_post,
     save_freebie,
     save_monetization_plan,
+    save_paid_note_draft,
     save_paid_note_outline,
     save_reviewed_post,
 )
@@ -1081,6 +1083,29 @@ with st.sidebar:
                 }
             )
             st.success("有料note構成を作成・保存しました")
+            st.rerun()
+
+    if st.button("有料note本文を作成"):
+        if not review_text.strip():
+            st.warning("有料note本文を作りたい構成案やテーマを入力してください。")
+        else:
+            with st.spinner("有料note本文を作成中..."):
+                paid_note_draft = create_paid_note_draft(
+                    client,
+                    review_text.strip(),
+                )
+                saved_path = save_paid_note_draft(
+                    platform,
+                    paid_note_draft,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"📝 有料note本文ドラフト\n\n{paid_note_draft}\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("有料note本文を作成・保存しました")
             st.rerun()
 
     if st.button("無料特典を作成"):

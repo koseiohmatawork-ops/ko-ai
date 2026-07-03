@@ -302,3 +302,72 @@ def save_freebie(theme: str, platform: str, freebie_text: str) -> Path:
 
     file_path.write_text(content, encoding="utf-8")
     return file_path
+
+def create_paid_note_draft(client: OpenAI, outline_text: str) -> str:
+    """有料note構成案から本文ドラフトを作る。"""
+    prompt = f"""
+あなたは有料note販売に強い編集者です。
+以下の有料note構成案またはテーマをもとに、販売できる有料noteの本文ドラフトを作ってください。
+
+【目的】
+SNS投稿や無料特典から誘導した読者が、読んで満足しやすい有料note本文にすること。
+初心者にもわかりやすく、実践できる内容にしてください。
+
+【出力形式】
+1. タイトル
+2. 冒頭文
+3. このnoteで得られること
+4. 本文
+5. 具体例
+6. 今日からやること
+7. まとめ
+8. 最後の一言
+
+【条件】
+・大学生が書いたような自然な文章にする
+・難しい言葉を使いすぎない
+・読みやすい見出しをつける
+・そのままnoteに貼れる形にする
+・販売価格は500円〜980円を想定する
+
+【有料note構成案またはテーマ】
+{outline_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "あなたはSNSから有料note販売につなげる本文作成の専門家です。読みやすく、実用的で、そのまま公開に近い本文を作ってください。",
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+    )
+
+    return response.choices[0].message.content or "有料note本文を作成できませんでした。"
+
+
+def save_paid_note_draft(platform: str, paid_note_draft: str) -> Path:
+    """有料note本文ドラフトを保存する。"""
+    save_dir = Path("posts/paid_note_drafts")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_{platform}_paid_note_draft.md"
+
+    content = f"""
+# 有料note本文ドラフト
+
+## 投稿先
+{platform}
+
+## 本文ドラフト
+{paid_note_draft}
+""".strip()
+
+    file_path.write_text(content, encoding="utf-8")
+    return file_path
