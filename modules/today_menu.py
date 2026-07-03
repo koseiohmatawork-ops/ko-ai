@@ -6,22 +6,27 @@ from openai import OpenAI
 
 def load_recent_stock(max_chars: int = 6000) -> str:
     """保存済み投稿ストックを読み込む。"""
-    folders = [
-        "posts/x",
-        "posts/instagram",
-        "posts/threads",
-        "posts/note",
-        "posts/ideas",
-        "posts/reviewed",
-        "posts/monetization",
-        "posts/paid_note_outlines",
-        "posts/calendars",
-        "posts/weekly_posts",
+    stock_sources = [
+        ("posts/x", "X投稿"),
+        ("posts/instagram", "Instagram投稿"),
+        ("posts/threads", "Threads投稿"),
+        ("posts/note", "note記事"),
+        ("posts/ideas", "アイデア"),
+        ("posts/reviewed", "改善済み投稿"),
+        ("posts/monetization", "収益導線案"),
+        ("posts/paid_note_outlines", "有料note構成案"),
+        ("posts/freebies", "無料特典"),
+        ("posts/paid_note_drafts", "有料note本文"),
+        ("posts/sales_funnels", "販売導線まとめ"),
+        ("posts/calendars", "投稿カレンダー"),
+        ("posts/weekly_posts", "7日分実投稿"),
+        ("posts/today_menus", "今日の投稿メニュー"),
+        ("posts/stock_analysis", "投稿ストック分析"),
     ]
 
     stock_texts = []
 
-    for folder in folders:
+    for folder, label in stock_sources:
         folder_path = Path(folder)
         if not folder_path.exists():
             continue
@@ -29,20 +34,29 @@ def load_recent_stock(max_chars: int = 6000) -> str:
         files = sorted(folder_path.glob("*"), reverse=True)
 
         for file_path in files[:3]:
-            if file_path.is_file():
-                try:
-                    content = file_path.read_text(encoding="utf-8")
-                    stock_texts.append(
-                        f"""
+            if not file_path.is_file():
+                continue
+
+            try:
+                content = file_path.read_text(encoding="utf-8")
+            except Exception:
+                continue
+
+            stock_texts.append(
+                f"""
+【種類】
+{label}
+
 【ファイル】
 {file_path}
 
 【内容】
 {content[:1200]}
 """.strip()
-                    )
-                except Exception:
-                    continue
+            )
+
+    if not stock_texts:
+        return "保存済み投稿ストックはまだありません。"
 
     joined_text = "\n\n---\n\n".join(stock_texts)
     return joined_text[:max_chars]
