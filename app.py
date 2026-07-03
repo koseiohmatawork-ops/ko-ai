@@ -136,6 +136,7 @@ def show_post_stock() -> None:
     )
     calendar_files = sorted(Path("posts/calendars").glob("*.md"), reverse=True)
     weekly_post_files = sorted(Path("posts/weekly_posts").glob("*.md"), reverse=True)
+    today_menu_files = sorted(Path("posts/today_menus").glob("*.md"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -168,6 +169,9 @@ def show_post_stock() -> None:
         weekly_post_files = [
             file_path for file_path in weekly_post_files if match_file(file_path)
         ]
+        today_menu_files = [
+            file_path for file_path in today_menu_files if match_file(file_path)
+        ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
@@ -178,7 +182,8 @@ def show_post_stock() -> None:
         f"収益導線案: {len(monetization_files)}件 / "
         f"有料note構成案: {len(paid_note_outline_files)}件 / "
         f"投稿カレンダー: {len(calendar_files)}件 / "
-        f"7日分実投稿: {len(weekly_post_files)}件"
+        f"7日分実投稿: {len(weekly_post_files)}件 / "
+        f"今日の投稿メニュー: {len(today_menu_files)}件"
     )
     
 
@@ -193,6 +198,7 @@ def show_post_stock() -> None:
         + paid_note_outline_files
         + calendar_files
         + weekly_post_files
+        + today_menu_files
     )
 
     if all_stock_files:
@@ -359,6 +365,21 @@ def show_post_stock() -> None:
                 key=f"download_weekly_posts_{file_path.name}",
             )
 
+    with st.expander("📌 今日の投稿メニューストック"):
+        if not today_menu_files:
+            st.caption("まだ今日の投稿メニューはありません")
+        for file_path in today_menu_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "📌 今日の投稿メニューをダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_today_menu_{file_path.name}",
+            )
+
 with st.sidebar:
     st.header("📊 現在の状態")
 
@@ -372,7 +393,7 @@ with st.sidebar:
     else:
         st.write("📄 PDFモード: OFF")
 
-        st.divider()
+    st.divider()
     st.header("📌 今日の投稿メニュー")
 
     if st.button("今日の投稿メニューを作成"):
