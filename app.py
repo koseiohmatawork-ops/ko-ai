@@ -35,6 +35,11 @@ from modules.post_calendar import (
     save_post_calendar,
     save_weekly_posts,
 )
+from modules.today_menu import (
+    create_today_post_menu,
+    load_recent_stock,
+    save_today_post_menu,
+)
 
 load_dotenv()
 client = OpenAI()
@@ -366,6 +371,24 @@ with st.sidebar:
         st.write("📄 PDFモード: ON")
     else:
         st.write("📄 PDFモード: OFF")
+
+        st.divider()
+    st.header("📌 今日の投稿メニュー")
+
+    if st.button("今日の投稿メニューを作成"):
+        with st.spinner("保存済みストックから今日の投稿メニューを作成中..."):
+            stock_text = load_recent_stock()
+            today_menu = create_today_post_menu(client, stock_text)
+            saved_path = save_today_post_menu(today_menu)
+
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": f"📌 今日の投稿メニュー\n\n{today_menu}\n\n保存先: {saved_path}",
+            }
+        )
+        st.success("今日の投稿メニューを作成・保存しました")
+        st.rerun()
 
     st.divider()
     st.header("🚀 全部生成")
