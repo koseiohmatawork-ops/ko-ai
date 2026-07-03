@@ -146,6 +146,7 @@ def show_post_stock() -> None:
     today_menu_files = sorted(Path("posts/today_menus").glob("*.md"), reverse=True)
     stock_analysis_files = sorted(Path("posts/stock_analysis").glob("*.md"), reverse=True)
     freebie_files = sorted(Path("posts/freebies").glob("*.md"), reverse=True)
+    paid_note_draft_files = sorted(Path("posts/paid_note_drafts").glob("*.md"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -187,6 +188,9 @@ def show_post_stock() -> None:
         freebie_files = [
             file_path for file_path in freebie_files if match_file(file_path)
         ]
+        paid_note_draft_files = [
+            file_path for file_path in paid_note_draft_files if match_file(file_path)
+        ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
@@ -200,7 +204,8 @@ def show_post_stock() -> None:
         f"7日分実投稿: {len(weekly_post_files)}件 / "
         f"今日の投稿メニュー: {len(today_menu_files)}件 / "
         f"投稿ストック分析: {len(stock_analysis_files)}件 / "
-        f"無料特典: {len(freebie_files)}件"
+        f"無料特典: {len(freebie_files)}件 / "
+        f"有料note本文: {len(paid_note_draft_files)}件"
     )
     
 
@@ -427,6 +432,21 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_freebie_{file_path.name}",
+            )
+
+    with st.expander("📝 有料note本文ストック"):
+        if not paid_note_draft_files:
+            st.caption("まだ有料note本文はありません")
+        for file_path in paid_note_draft_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "📝 有料note本文をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_paid_note_draft_{file_path.name}",
             )
 
 with st.sidebar:
