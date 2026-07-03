@@ -32,6 +32,7 @@ from modules.post_reviewer import (
     save_paid_note_draft,
     save_paid_note_outline,
     save_reviewed_post,
+    save_sales_funnel,
 )
 from modules.post_calendar import (
     create_post_calendar,
@@ -147,6 +148,7 @@ def show_post_stock() -> None:
     stock_analysis_files = sorted(Path("posts/stock_analysis").glob("*.md"), reverse=True)
     freebie_files = sorted(Path("posts/freebies").glob("*.md"), reverse=True)
     paid_note_draft_files = sorted(Path("posts/paid_note_drafts").glob("*.md"), reverse=True)
+    sales_funnel_files = sorted(Path("posts/sales_funnels").glob("*.md"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -191,6 +193,9 @@ def show_post_stock() -> None:
         paid_note_draft_files = [
             file_path for file_path in paid_note_draft_files if match_file(file_path)
         ]
+        sales_funnel_files = [
+            file_path for file_path in sales_funnel_files if match_file(file_path)
+        ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
@@ -205,7 +210,8 @@ def show_post_stock() -> None:
         f"今日の投稿メニュー: {len(today_menu_files)}件 / "
         f"投稿ストック分析: {len(stock_analysis_files)}件 / "
         f"無料特典: {len(freebie_files)}件 / "
-        f"有料note本文: {len(paid_note_draft_files)}件"
+        f"有料note本文: {len(paid_note_draft_files)}件 / "
+        f"販売導線まとめ: {len(sales_funnel_files)}件"
     )
     
 
@@ -224,6 +230,7 @@ def show_post_stock() -> None:
         + stock_analysis_files
         + freebie_files
         + paid_note_draft_files
+        + sales_funnel_files
     )
 
     if all_stock_files:
@@ -448,6 +455,21 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_paid_note_draft_{file_path.name}",
+            )
+
+    with st.expander("🚀 販売導線まとめストック"):
+        if not sales_funnel_files:
+            st.caption("まだ販売導線まとめはありません")
+        for file_path in sales_funnel_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "🚀 販売導線まとめをダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_sales_funnel_{file_path.name}",
             )
 
 with st.sidebar:
@@ -1208,6 +1230,15 @@ with st.sidebar:
                     paid_note_draft,
                 )
 
+                sales_funnel_path = save_sales_funnel(
+                    platform,
+                    improved_post,
+                    monetization_plan,
+                    paid_note_outline,
+                    freebie_text,
+                    paid_note_draft,
+                )
+
             funnel_result = f"""
 🚀 販売導線まとめ
 
@@ -1243,6 +1274,11 @@ with st.sidebar:
 {paid_note_draft}
 
 保存先: {paid_note_draft_path}
+
+---
+
+## まとめファイル
+保存先: {sales_funnel_path}
 """.strip()
 
             st.session_state.messages.append(
@@ -1251,7 +1287,7 @@ with st.sidebar:
                     "content": funnel_result,
                 }
             )
-            st.success("販売導線・無料特典・有料note本文をまとめて作成・保存しました")
+            st.success("販売導線一式を作成・保存しました")
             st.rerun()
 
     st.divider()

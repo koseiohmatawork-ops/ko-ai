@@ -371,3 +371,53 @@ def save_paid_note_draft(platform: str, paid_note_draft: str) -> Path:
 
     file_path.write_text(content, encoding="utf-8")
     return file_path
+
+def save_sales_funnel(
+    platform: str,
+    improved_post: str,
+    monetization_plan: str,
+    paid_note_outline: str,
+    freebie_text: str,
+    paid_note_draft: str,
+) -> Path:
+    """販売導線一式を1つのまとめファイルとして保存する。"""
+    save_dir = Path("posts/sales_funnels")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_{platform}_sales_funnel.md"
+
+    content = f"""
+# 販売導線まとめ
+
+## 投稿先
+{platform}
+
+---
+
+## 1. 改善後の投稿
+{improved_post}
+
+---
+
+## 2. 収益導線案
+{monetization_plan}
+
+---
+
+## 3. 有料note構成案
+{paid_note_outline}
+
+---
+
+## 4. 無料特典案
+{freebie_text}
+
+---
+
+## 5. 有料note本文ドラフト
+{paid_note_draft}
+""".strip()
+
+    file_path.write_text(content, encoding="utf-8")
+    return file_path
