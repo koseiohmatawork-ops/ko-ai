@@ -151,6 +151,7 @@ def show_post_stock() -> None:
     freebie_files = sorted(Path("posts/freebies").glob("*.md"), reverse=True)
     paid_note_draft_files = sorted(Path("posts/paid_note_drafts").glob("*.md"), reverse=True)
     sales_funnel_files = sorted(Path("posts/sales_funnels").glob("*.md"), reverse=True)
+    stock_cleanup_files = sorted(Path("posts/stock_cleanup").glob("*.md"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -198,6 +199,9 @@ def show_post_stock() -> None:
         sales_funnel_files = [
             file_path for file_path in sales_funnel_files if match_file(file_path)
         ]
+        stock_cleanup_files = [
+            file_path for file_path in stock_cleanup_files if match_file(file_path)
+        ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
@@ -213,7 +217,8 @@ def show_post_stock() -> None:
         f"投稿ストック分析: {len(stock_analysis_files)}件 / "
         f"無料特典: {len(freebie_files)}件 / "
         f"有料note本文: {len(paid_note_draft_files)}件 / "
-        f"販売導線まとめ: {len(sales_funnel_files)}件"
+        f"販売導線まとめ: {len(sales_funnel_files)}件 / "
+        f"投稿ストック整理案: {len(stock_cleanup_files)}件"
     )
     
 
@@ -233,6 +238,7 @@ def show_post_stock() -> None:
         + freebie_files
         + paid_note_draft_files
         + sales_funnel_files
+        + stock_cleanup_files
     )
 
     if all_stock_files:
@@ -472,6 +478,21 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_sales_funnel_{file_path.name}",
+            )
+
+    with st.expander("🗂 投稿ストック整理案ストック"):
+        if not stock_cleanup_files:
+            st.caption("まだ投稿ストック整理案はありません")
+        for file_path in stock_cleanup_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "🗂 投稿ストック整理案をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_stock_cleanup_{file_path.name}",
             )
 
 with st.sidebar:
