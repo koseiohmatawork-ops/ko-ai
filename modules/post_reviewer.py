@@ -235,3 +235,70 @@ def save_paid_note_outline(platform: str, original_post: str, paid_note_outline:
 
     file_path.write_text(content, encoding="utf-8")
     return file_path
+
+def create_freebie(client: OpenAI, theme: str, platform: str = "SNS") -> str:
+    """無料特典の内容案を作る。"""
+    prompt = f"""
+あなたはSNS運用、リード獲得、コンテンツ販売に強いマーケターです。
+以下のテーマについて、{platform}から自然に誘導できる無料特典を作ってください。
+
+【目的】
+読者が保存・フォロー・プロフィール閲覧・無料特典受け取りをしたくなる内容にすること。
+最終的には有料noteや商品販売につながる無料特典にしてください。
+
+【出力形式】
+1. 無料特典のタイトル案を5つ
+2. 想定読者
+3. 読者の悩み
+4. 無料特典で解決すること
+5. 無料特典の中身
+6. チェックリスト形式の内容
+7. 投稿から無料特典へ誘導する文章
+8. 無料特典のあとに売れる有料商品案
+9. 次に作るべき投稿テーマ
+
+【テーマ】
+{theme}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "あなたはSNSから無料特典へ誘導し、その後の有料販売につなげる導線設計の専門家です。初心者でもそのまま使える具体案を作ってください。",
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+    )
+
+    return response.choices[0].message.content or "無料特典を作成できませんでした。"
+
+
+def save_freebie(theme: str, platform: str, freebie_text: str) -> Path:
+    """無料特典案をストックとして保存する。"""
+    save_dir = Path("posts/freebies")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_theme = "freebie"
+    file_path = save_dir / f"{timestamp}_{platform}_{safe_theme}.md"
+
+    content = f"""
+# 無料特典案
+
+## 投稿先
+{platform}
+
+## テーマ
+{theme}
+
+## 無料特典案
+{freebie_text}
+""".strip()
+
+    file_path.write_text(content, encoding="utf-8")
+    return file_path

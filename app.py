@@ -21,10 +21,12 @@ from modules.news_fetcher import fetch_ai_news
 from modules.article_fetcher import fetch_article
 from modules.idea_generator import generate_ideas, save_ideas
 from modules.post_reviewer import (
+    create_freebie,
     create_monetization_plan,
     create_paid_note_outline,
     improve_post,
     review_post,
+    save_freebie,
     save_monetization_plan,
     save_paid_note_outline,
     save_reviewed_post,
@@ -141,6 +143,7 @@ def show_post_stock() -> None:
     weekly_post_files = sorted(Path("posts/weekly_posts").glob("*.md"), reverse=True)
     today_menu_files = sorted(Path("posts/today_menus").glob("*.md"), reverse=True)
     stock_analysis_files = sorted(Path("posts/stock_analysis").glob("*.md"), reverse=True)
+    freebie_files = sorted(Path("posts/freebies").glob("*.md"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -179,6 +182,9 @@ def show_post_stock() -> None:
         stock_analysis_files = [
             file_path for file_path in stock_analysis_files if match_file(file_path)
         ]
+        freebie_files = [
+            file_path for file_path in freebie_files if match_file(file_path)
+        ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
@@ -191,7 +197,8 @@ def show_post_stock() -> None:
         f"投稿カレンダー: {len(calendar_files)}件 / "
         f"7日分実投稿: {len(weekly_post_files)}件 / "
         f"今日の投稿メニュー: {len(today_menu_files)}件 / "
-        f"投稿ストック分析: {len(stock_analysis_files)}件"
+        f"投稿ストック分析: {len(stock_analysis_files)}件 / "
+        f"無料特典: {len(freebie_files)}件"
     )
     
 
@@ -208,6 +215,7 @@ def show_post_stock() -> None:
         + weekly_post_files
         + today_menu_files
         + stock_analysis_files
+        + freebie_files
     )
 
     if all_stock_files:
@@ -402,6 +410,21 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_stock_analysis_{file_path.name}",
+            )
+
+    with st.expander("🎁 無料特典ストック"):
+        if not freebie_files:
+            st.caption("まだ無料特典はありません")
+        for file_path in freebie_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "🎁 無料特典をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_freebie_{file_path.name}",
             )
 
 with st.sidebar:
@@ -1058,6 +1081,31 @@ with st.sidebar:
                 }
             )
             st.success("有料note構成を作成・保存しました")
+            st.rerun()
+
+    if st.button("無料特典を作成"):
+        if not review_text.strip():
+            st.warning("無料特典を作りたい投稿やテーマを入力してください。")
+        else:
+            with st.spinner("無料特典を作成中..."):
+                freebie_text = create_freebie(
+                    client,
+                    review_text.strip(),
+                    platform,
+                )
+                saved_path = save_freebie(
+                    review_text.strip()[:40],
+                    platform,
+                    freebie_text,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"🎁 無料特典案\n\n{freebie_text}\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("無料特典を作成・保存しました")
             st.rerun()
 
     if st.button("販売導線をまとめて作成"):
