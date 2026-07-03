@@ -4,6 +4,19 @@ from pathlib import Path
 from openai import OpenAI
 
 
+EXCLUDE_STOCK_KEYWORDS = [
+    "出産二次創作",
+    "出産シーン",
+    "ゲームキャラの“出産",
+    "ゲームキャラの出産",
+]
+
+
+def should_exclude_stock(content: str) -> bool:
+    """今日の投稿メニューや分析に使わないストックを判定する。"""
+    return any(keyword in content for keyword in EXCLUDE_STOCK_KEYWORDS)
+
+
 def load_recent_stock(max_chars: int = 6000) -> str:
     """保存済み投稿ストックを読み込む。"""
     stock_sources = [
@@ -42,6 +55,9 @@ def load_recent_stock(max_chars: int = 6000) -> str:
             except Exception:
                 continue
 
+            if should_exclude_stock(content):
+                continue
+
             stock_texts.append(
                 f"""
 【種類】
@@ -76,6 +92,8 @@ def create_today_post_menu(client: OpenAI, stock_text: str) -> str:
 【目的】
 今日の投稿作業を迷わず進められるようにすること。
 特に、保存・フォロー・note購入・無料特典・有料コンテンツ販売につながる行動を優先してください。
+AI副業、SNS運用、自動化、投稿作成ノウハウ、無料特典、有料note販売に近いテーマを優先してください。
+著作権・性的表現・炎上リスクが高い二次創作系テーマは避けてください。
 
 【出力形式】
 1. 今日いちばん投稿すべき内容
@@ -132,6 +150,8 @@ def create_stock_analysis(client: OpenAI, stock_text: str) -> str:
 
 【目的】
 保存した投稿をただ貯めるだけでなく、どの投稿を使えばフォロー・保存・note購入・無料特典・有料コンテンツ販売につながりやすいか判断すること。
+AI副業、SNS運用、自動化、投稿作成ノウハウ、無料特典、有料note販売に近いテーマを優先してください。
+著作権・性的表現・炎上リスクが高い二次創作系テーマは低評価にしてください。
 
 【出力形式】
 1. 今あるストック全体の傾向
