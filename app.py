@@ -43,9 +43,11 @@ from modules.post_calendar import (
 
 from modules.today_menu import (
     create_stock_analysis,
+    create_stock_cleanup_plan,
     create_today_post_menu,
     load_recent_stock,
     save_stock_analysis,
+    save_stock_cleanup_plan,
     save_today_post_menu,
 )
 
@@ -519,6 +521,24 @@ with st.sidebar:
             }
         )
         st.success("投稿ストック分析を作成・保存しました")
+        st.rerun()
+
+    st.divider()
+    st.header("🗂 投稿ストック整理")
+
+    if st.button("投稿ストック整理案を作成"):
+        with st.spinner("保存済みストックを整理中..."):
+            stock_text = load_recent_stock(max_chars=12000)
+            cleanup_plan = create_stock_cleanup_plan(client, stock_text)
+            saved_path = save_stock_cleanup_plan(cleanup_plan)
+
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": f"🗂 投稿ストック整理案\n\n{cleanup_plan}\n\n保存先: {saved_path}",
+            }
+        )
+        st.success("投稿ストック整理案を作成・保存しました")
         st.rerun()
 
     st.divider()

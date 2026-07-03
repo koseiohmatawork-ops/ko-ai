@@ -200,3 +200,65 @@ def save_stock_analysis(stock_analysis: str) -> Path:
 
     file_path.write_text(content, encoding="utf-8")
     return file_path
+
+
+def create_stock_cleanup_plan(client: OpenAI, stock_text: str) -> str:
+    """保存済みストックから、今後使うもの・避けるものを整理する案を作る。"""
+    prompt = f"""
+あなたはSNS運用とコンテンツ販売に強い編集者です。
+以下の保存済み投稿ストックを見て、今後の収益化に使うべきものと、使わない方がよいものを整理してください。
+
+【目的】
+Ko AIが今後、AI副業・SNS運用・投稿自動化・無料特典・有料note販売に寄った投稿を作れるように、ストックを整理すること。
+
+【判断基準】
+・AI副業、SNS運用、自動化、投稿作成ノウハウ、無料特典、有料note販売に近いものは残す
+・著作権、性的表現、炎上、二次創作リスクが高いものは避ける
+・収益化につながりにくいものは優先度を下げる
+・今後の投稿メニューに使うべきテーマを明確にする
+
+【出力形式】
+1. 今後も使うべきストック
+2. 優先して投稿に使うべきテーマ
+3. archiveに移してもよいストック
+4. 使わない方がよい理由
+5. 今後作るべき安全な投稿テーマ10個
+6. 今日からの運用ルール
+
+【保存済み投稿ストック】
+{stock_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "あなたは投稿ストックを整理し、収益化に使える安全なテーマへ寄せる編集長です。実用的に判断してください。",
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+    )
+
+    return response.choices[0].message.content or "投稿ストック整理案を作成できませんでした。"
+
+
+def save_stock_cleanup_plan(cleanup_plan: str) -> Path:
+    """投稿ストック整理案を保存する。"""
+    save_dir = Path("posts/stock_cleanup")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_stock_cleanup.md"
+
+    content = f"""
+# 投稿ストック整理案
+
+{cleanup_plan}
+""".strip()
+
+    file_path.write_text(content, encoding="utf-8")
+    return file_path
