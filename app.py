@@ -123,6 +123,9 @@ if "today_menu_post_source" not in st.session_state:
 if "stock_analysis_post_source" not in st.session_state:
     st.session_state.stock_analysis_post_source = ""
 
+if "safety_check_source" not in st.session_state:
+    st.session_state.safety_check_source = ""
+
 if "exclude_keywords_text" not in st.session_state:
     st.session_state.exclude_keywords_text = ""
 
@@ -869,6 +872,57 @@ def save_stock_analysis_posts(post_text: str) -> Path:
     return file_path
 
 
+def check_and_rewrite_post_safety(client: OpenAI, post_text: str) -> str:
+    """投稿文の危ない表現を確認し、安全な表現に直す。"""
+    prompt = f"""
+あなたはSNS投稿の表現チェック担当です。
+以下の投稿文を確認し、収益化・副業・AI活用に関する危ない表現を安全に直してください。
+
+チェックする点:
+- 実在しない成功事例や実績を断定していないか
+- 「必ず稼げる」「誰でも稼げる」「月◯万円達成」など収益保証に見える表現がないか
+- 架空の人物や事例を実在のように見せていないか
+- 誇大広告に見える表現がないか
+- 無料特典や有料noteへの導線が自然か
+
+修正ルール:
+- 実績が不明な場合は「架空例」「シミュレーション」「例」と明記する
+- 収益は保証せず「目指す」「可能性がある」「一例」などに弱める
+- 投稿として使いやすい自然な文章にする
+
+出力形式:
+1. 危ない可能性がある表現
+2. 修正理由
+3. 安全に直した投稿文
+4. 投稿前の注意点
+
+投稿文:
+{post_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": "あなたはSNS投稿の表現チェックと安全なリライトの専門家です。"},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    return response.choices[0].message.content or ""
+
+
+def save_safety_checked_post(post_text: str) -> Path:
+    """安全チェック済み投稿を保存する。"""
+    save_dir = Path("posts/safety_checked")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_safety_checked.md"
+    file_path.write_text(post_text, encoding="utf-8")
+    return file_path
+
+
 with st.sidebar:
     st.header("📊 現在の状態")
 
@@ -1030,6 +1084,36 @@ with st.sidebar:
                 }
             )
             st.success("分析から実投稿セットを作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("🛡 投稿安全チェック")
+
+    safety_check_source = st.text_area(
+        "安全チェックしたい投稿を貼る",
+        placeholder="ここにX投稿・Instagramキャプション・note導入文などを貼る",
+        key="safety_check_source",
+        height=180,
+    )
+
+    if st.button("投稿を安全チェックして修正"):
+        if not safety_check_source.strip():
+            st.warning("安全チェックしたい投稿を入力してください。")
+        else:
+            with st.spinner("投稿の危ない表現を確認・修正中..."):
+                safety_checked_post = check_and_rewrite_post_safety(
+                    client,
+                    safety_check_source.strip(),
+                )
+                saved_path = save_safety_checked_post(safety_checked_post)
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"🛡 投稿安全チェック結果\n\n{safety_checked_post}\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("投稿を安全チェック・保存しました")
             st.rerun()
 
     st.divider()
