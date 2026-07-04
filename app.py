@@ -120,6 +120,9 @@ if "template_post_theme" not in st.session_state:
 if "today_menu_post_source" not in st.session_state:
     st.session_state.today_menu_post_source = ""
 
+if "stock_analysis_post_source" not in st.session_state:
+    st.session_state.stock_analysis_post_source = ""
+
 if "exclude_keywords_text" not in st.session_state:
     st.session_state.exclude_keywords_text = ""
 
@@ -787,6 +790,60 @@ def save_today_menu_posts(post_text: str) -> Path:
     return file_path
 
 
+def create_posts_from_stock_analysis(client: OpenAI, stock_analysis_text: str) -> str:
+    """投稿ストック分析から次に作るべき実投稿セットを作成する。"""
+    prompt = f"""
+あなたはAI副業・SNS運用・無料特典・有料note販売に強いSNS投稿作成者です。
+以下の投稿ストック分析をもとに、次に作るべき投稿を具体的に作成してください。
+
+目的:
+- 分析結果の「次に作るべき投稿テーマ」から、すぐ投稿できる形にする
+- 個人のAI副業、SNS運用、投稿自動化、無料特典、有料note販売に寄せる
+- 企業向けAI活用や一般的なAIニュースではなく、初心者・個人・副業を始めたい人向けにする
+- 無料特典や有料noteへの導線を自然に入れる
+
+出力形式:
+1. 今日作るべき投稿テーマTOP3
+2. X投稿案3本
+3. Instagramカルーセル案1本
+   - 1枚目
+   - 2枚目
+   - 3枚目
+   - 4枚目
+   - 5枚目
+   - キャプション
+4. note記事タイトル案3つ
+5. 無料特典案3つ
+6. 有料noteにつなげる導線
+7. 次の行動
+
+投稿ストック分析:
+{stock_analysis_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": "あなたはSNS投稿と収益化導線の専門家です。"},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    return response.choices[0].message.content or ""
+
+
+def save_stock_analysis_posts(post_text: str) -> Path:
+    """投稿ストック分析から作った実投稿セットを保存する。"""
+    save_dir = Path("posts/stock_analysis_posts")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_stock_analysis_posts.md"
+    file_path.write_text(post_text, encoding="utf-8")
+    return file_path
+
+
 with st.sidebar:
     st.header("📊 現在の状態")
 
@@ -918,6 +975,36 @@ with st.sidebar:
                 }
             )
             st.success("今日メニューから実投稿セットを作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("📊 分析から実投稿生成")
+
+    stock_analysis_post_source = st.text_area(
+        "投稿ストック分析を貼る",
+        placeholder="ここに投稿ストック分析の内容を貼る",
+        key="stock_analysis_post_source",
+        height=180,
+    )
+
+    if st.button("分析から実投稿セットを作成"):
+        if not stock_analysis_post_source.strip():
+            st.warning("投稿ストック分析を入力してください。")
+        else:
+            with st.spinner("投稿ストック分析から実投稿セットを作成中..."):
+                stock_analysis_posts = create_posts_from_stock_analysis(
+                    client,
+                    stock_analysis_post_source.strip(),
+                )
+                saved_path = save_stock_analysis_posts(stock_analysis_posts)
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"📊 分析から作成した実投稿セット\n\n{stock_analysis_posts}\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("分析から実投稿セットを作成・保存しました")
             st.rerun()
 
     st.divider()
