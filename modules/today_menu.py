@@ -81,6 +81,7 @@ def load_recent_stock(max_chars: int = 6000) -> str:
         ("posts/sales_funnels", "販売導線まとめ"),
         ("posts/results", "投稿反応メモ"),
         ("posts/stock_cleanup", "投稿ストック整理案"),
+        ("posts/safety_checked", "安全チェック済み投稿"),
         ("posts/freebies", "無料特典"),
         ("posts/paid_note_drafts", "有料note本文"),
         ("posts/paid_note_outlines", "有料note構成案"),
