@@ -173,6 +173,7 @@ def show_post_stock() -> None:
     today_menu_files = sorted(Path("posts/today_menus").glob("*.md"), reverse=True)
     today_menu_post_files = sorted(Path("posts/today_menu_posts").glob("*.md"), reverse=True)
     stock_analysis_files = sorted(Path("posts/stock_analysis").glob("*.md"), reverse=True)
+    stock_analysis_post_files = sorted(Path("posts/stock_analysis_posts").glob("*.md"), reverse=True)
     freebie_files = sorted(Path("posts/freebies").glob("*.md"), reverse=True)
     paid_note_draft_files = sorted(Path("posts/paid_note_drafts").glob("*.md"), reverse=True)
     sales_funnel_files = sorted(Path("posts/sales_funnels").glob("*.md"), reverse=True)
@@ -218,6 +219,9 @@ def show_post_stock() -> None:
         stock_analysis_files = [
             file_path for file_path in stock_analysis_files if match_file(file_path)
         ]
+        stock_analysis_post_files = [
+            file_path for file_path in stock_analysis_post_files if match_file(file_path)
+        ]
         freebie_files = [
             file_path for file_path in freebie_files if match_file(file_path)
         ]
@@ -250,6 +254,7 @@ def show_post_stock() -> None:
         f"今日の投稿メニュー: {len(today_menu_files)}件 / "
         f"今日メニュー実投稿: {len(today_menu_post_files)}件 / "
         f"投稿ストック分析: {len(stock_analysis_files)}件 / "
+        f"分析実投稿: {len(stock_analysis_post_files)}件 / "
         f"無料特典: {len(freebie_files)}件 / "
         f"有料note本文: {len(paid_note_draft_files)}件 / "
         f"販売導線まとめ: {len(sales_funnel_files)}件 / "
@@ -274,6 +279,7 @@ def show_post_stock() -> None:
         + today_menu_files
         + today_menu_post_files
         + stock_analysis_files
+        + stock_analysis_post_files
         + freebie_files
         + paid_note_draft_files
         + sales_funnel_files
@@ -489,6 +495,21 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_stock_analysis_{file_path.name}",
+            )
+
+    with st.expander("📊 分析実投稿ストック"):
+        if not stock_analysis_post_files:
+            st.caption("まだ分析実投稿はありません")
+        for file_path in stock_analysis_post_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "📊 分析実投稿をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_stock_analysis_posts_{file_path.name}",
             )
 
     with st.expander("🎁 無料特典ストック"):
