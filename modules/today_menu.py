@@ -74,6 +74,7 @@ def archive_excluded_stock(keywords: list[str] | None = None) -> list[str]:
 def load_recent_stock(max_chars: int = 6000) -> str:
     """保存済み投稿ストックを読み込む。"""
     stock_sources = [
+        ("posts/stock_analysis_posts", "分析実投稿"),
         ("posts/today_menu_posts", "今日メニュー実投稿"),
         ("posts/template_posts", "テンプレ投稿"),
         ("posts/sales_funnels", "販売導線まとめ"),
