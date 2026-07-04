@@ -117,6 +117,9 @@ if "post_result_memo" not in st.session_state:
 if "template_post_theme" not in st.session_state:
     st.session_state.template_post_theme = ""
 
+if "today_menu_post_source" not in st.session_state:
+    st.session_state.today_menu_post_source = ""
+
 if "exclude_keywords_text" not in st.session_state:
     st.session_state.exclude_keywords_text = ""
 
@@ -711,6 +714,61 @@ def save_template_post(theme: str, platform: str, template_type: str, post_text:
     file_path.write_text(post_text, encoding="utf-8")
     return file_path
 
+
+def create_posts_from_today_menu(client: OpenAI, today_menu_text: str) -> str:
+    """今日の投稿メニューから実投稿セットを作成する。"""
+    prompt = f"""
+あなたはAI副業・SNS運用・無料特典・有料note販売に強いSNS投稿作成者です。
+以下の今日の投稿メニューをもとに、そのまま投稿作業に使える実投稿セットを作ってください。
+
+目的:
+- 個人がAI副業やSNS運用を始める流れに寄せる
+- 無料特典・プロフィールリンク・有料note販売につながる導線を入れる
+- 企業向けAI活用ではなく、初心者・個人・副業を始めたい人向けにする
+- 顔出しなしでも使える内容にする
+
+出力形式:
+1. X投稿
+2. Instagramカルーセル案
+   - 1枚目
+   - 2枚目
+   - 3枚目
+   - 4枚目
+   - 5枚目
+   - キャプション
+3. Threads投稿
+4. note導入文
+5. 無料特典誘導文
+6. 有料note誘導文
+7. 投稿時の注意点
+
+今日の投稿メニュー:
+{today_menu_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": "あなたはSNS投稿と収益化導線の専門家です。"},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    return response.choices[0].message.content or ""
+
+
+def save_today_menu_posts(post_text: str) -> Path:
+    """今日の投稿メニューから作った実投稿セットを保存する。"""
+    save_dir = Path("posts/today_menu_posts")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_today_menu_posts.md"
+    file_path.write_text(post_text, encoding="utf-8")
+    return file_path
+
+
 with st.sidebar:
     st.header("📊 現在の状態")
 
@@ -813,6 +871,36 @@ with st.sidebar:
 
             st.rerun()
 
+
+    st.divider()
+    st.header("🧾 今日メニューから実投稿生成")
+
+    today_menu_post_source = st.text_area(
+        "今日の投稿メニューを貼る",
+        placeholder="ここに今日の投稿メニューの内容を貼る",
+        key="today_menu_post_source",
+        height=180,
+    )
+
+    if st.button("今日メニューから実投稿セットを作成"):
+        if not today_menu_post_source.strip():
+            st.warning("今日の投稿メニューを入力してください。")
+        else:
+            with st.spinner("今日の投稿メニューから実投稿セットを作成中..."):
+                today_menu_posts = create_posts_from_today_menu(
+                    client,
+                    today_menu_post_source.strip(),
+                )
+                saved_path = save_today_menu_posts(today_menu_posts)
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"🧾 今日メニューから作成した実投稿セット\n\n{today_menu_posts}\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("今日メニューから実投稿セットを作成・保存しました")
+            st.rerun()
 
     st.divider()
     st.header("🚀 全部生成")
