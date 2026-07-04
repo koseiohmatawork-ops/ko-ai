@@ -114,6 +114,9 @@ if "post_result_title" not in st.session_state:
 if "post_result_memo" not in st.session_state:
     st.session_state.post_result_memo = ""
 
+if "template_post_theme" not in st.session_state:
+    st.session_state.template_post_theme = ""
+
 if "exclude_keywords_text" not in st.session_state:
     st.session_state.exclude_keywords_text = ""
 
@@ -633,6 +636,62 @@ def save_post_result_memo(title: str, platform: str, memo: str) -> Path:
     file_path.write_text(content, encoding="utf-8")
     return file_path
 
+def create_template_post(client: OpenAI, theme: str, platform: str, template_type: str) -> str:
+    """決まった型に沿って投稿を作成する。"""
+    prompt = f"""
+あなたはSNS投稿と収益導線設計の専門家です。
+以下の条件で、{platform}向けの投稿を作ってください。
+
+テーマ:
+{theme}
+
+投稿テンプレート:
+{template_type}
+
+共通ルール:
+- AI副業、SNS運用、自動化、投稿作成ノウハウに関心がある人向け
+- 売り込み感を出しすぎない
+- 保存・共感・行動につながる内容にする
+- 最後に自然なCTAを入れる
+- 顔出しなしでも使える内容にする
+
+テンプレート別ルール:
+保存されやすい型: 手順・チェックリスト・比較など、後で見返したくなる形にする
+共感型: 初心者の悩みや不安から入り、解決の方向性を示す
+無料特典誘導型: 無料で受け取る理由を自然に作り、押し売りにしない
+有料note誘導型: 無料投稿では足りない部分を示し、有料noteへの興味を作る
+
+出力形式:
+投稿本文:
+
+CTA:
+
+狙い:
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": "あなたはSNS投稿と収益化導線の専門家です。"},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    return response.choices[0].message.content or ""
+
+
+def save_template_post(theme: str, platform: str, template_type: str, post_text: str) -> Path:
+    """テンプレート投稿を保存する。"""
+    save_dir = Path("posts/template_posts")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_theme = theme.strip().replace("/", "_").replace(" ", "_")[:30] or "template_post"
+    safe_template = template_type.strip().replace("/", "_").replace(" ", "_")[:20]
+    file_path = save_dir / f"{timestamp}_{platform}_{safe_template}_{safe_theme}.md"
+    file_path.write_text(post_text, encoding="utf-8")
+    return file_path
 
 with st.sidebar:
     st.header("📊 現在の状態")
@@ -1271,6 +1330,54 @@ with st.sidebar:
                 }
             )
             st.success("7日分の実投稿を作成・保存しました")
+            st.rerun()
+
+        st.divider()
+    st.header("🧩 投稿テンプレ生成")
+
+    template_post_platform = st.selectbox(
+        "テンプレ投稿の投稿先",
+        ["X", "Instagram", "note", "TikTok", "YouTube Shorts"],
+        key="template_post_platform",
+    )
+
+    template_type = st.selectbox(
+        "投稿テンプレート",
+        ["保存されやすい型", "共感型", "無料特典誘導型", "有料note誘導型"],
+        key="template_type",
+    )
+
+    template_post_theme = st.text_input(
+        "テンプレ投稿のテーマ",
+        placeholder="例: AI副業で最初にやること",
+        key="template_post_theme",
+    )
+
+    if st.button("テンプレ投稿を作成"):
+        if not template_post_theme.strip():
+            st.warning("テンプレ投稿のテーマを入力してください。")
+        else:
+            with st.spinner("テンプレ投稿を作成中..."):
+                template_post = create_template_post(
+                    client,
+                    template_post_theme.strip(),
+                    template_post_platform,
+                    template_type,
+                )
+                saved_path = save_template_post(
+                    template_post_theme.strip(),
+                    template_post_platform,
+                    template_type,
+                    template_post,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"🧩 テンプレ投稿\n\n{template_post}\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("テンプレ投稿を作成・保存しました")
             st.rerun()
 
     st.divider()
