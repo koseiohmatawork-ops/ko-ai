@@ -108,6 +108,12 @@ if "calendar_theme" not in st.session_state:
 if "sales_funnel_calendar_source" not in st.session_state:
     st.session_state.sales_funnel_calendar_source = ""
 
+if "post_result_title" not in st.session_state:
+    st.session_state.post_result_title = ""
+
+if "post_result_memo" not in st.session_state:
+    st.session_state.post_result_memo = ""
+
 if "exclude_keywords_text" not in st.session_state:
     st.session_state.exclude_keywords_text = ""
 
@@ -161,6 +167,7 @@ def show_post_stock() -> None:
     paid_note_draft_files = sorted(Path("posts/paid_note_drafts").glob("*.md"), reverse=True)
     sales_funnel_files = sorted(Path("posts/sales_funnels").glob("*.md"), reverse=True)
     stock_cleanup_files = sorted(Path("posts/stock_cleanup").glob("*.md"), reverse=True)
+    post_result_files = sorted(Path("posts/results").glob("*.md"), reverse=True)
     archive_files = sorted(Path("posts/archive").glob("*"), reverse=True)
 
     if search_keyword.strip():
@@ -212,6 +219,9 @@ def show_post_stock() -> None:
         stock_cleanup_files = [
             file_path for file_path in stock_cleanup_files if match_file(file_path)
         ]
+        post_result_files = [
+            file_path for file_path in post_result_files if match_file(file_path)
+        ]
         archive_files = [
             file_path for file_path in archive_files if file_path.is_file() and match_file(file_path)
         ]
@@ -232,6 +242,7 @@ def show_post_stock() -> None:
         f"有料note本文: {len(paid_note_draft_files)}件 / "
         f"販売導線まとめ: {len(sales_funnel_files)}件 / "
         f"投稿ストック整理案: {len(stock_cleanup_files)}件 / "
+        f"投稿反応メモ: {len(post_result_files)}件 / "
         f"archive: {len(archive_files)}件"
     )
     
@@ -253,6 +264,7 @@ def show_post_stock() -> None:
         + paid_note_draft_files
         + sales_funnel_files
         + stock_cleanup_files
+        + post_result_files
     )
 
     if all_stock_files:
@@ -509,6 +521,21 @@ def show_post_stock() -> None:
                 key=f"download_stock_cleanup_{file_path.name}",
             )
 
+    with st.expander("📈 投稿反応メモストック"):
+        if not post_result_files:
+            st.caption("まだ投稿反応メモはありません")
+        for file_path in post_result_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "📈 投稿反応メモをダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_post_result_{file_path.name}",
+            )
+
     with st.expander("🗄 archiveストック"):
         if not archive_files:
             st.caption("まだarchiveに移動したストックはありません")
@@ -578,6 +605,32 @@ def save_sales_funnel_calendar(platform: str, calendar_text: str) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_path = save_dir / f"{timestamp}_{platform}_sales_funnel_calendar.md"
     file_path.write_text(calendar_text, encoding="utf-8")
+    return file_path
+
+
+def save_post_result_memo(title: str, platform: str, memo: str) -> Path:
+    """投稿後の反応メモを保存する。"""
+    save_dir = Path("posts/results")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = title.strip().replace("/", "_").replace(" ", "_")[:30] or "post_result"
+    file_path = save_dir / f"{timestamp}_{platform}_{safe_title}.md"
+    content = f"""
+# 投稿反応メモ
+
+## 投稿名
+{title}
+
+## 投稿先
+{platform}
+
+## 反応メモ
+{memo}
+""".strip()
+    file_path.write_text(content, encoding="utf-8")
     return file_path
 
 
@@ -1218,6 +1271,40 @@ with st.sidebar:
                 }
             )
             st.success("7日分の実投稿を作成・保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("📈 投稿後の反応メモ")
+
+    post_result_title = st.text_input(
+        "投稿名・テーマ",
+        placeholder="例: AI副業初心者向け X投稿 Day1",
+        key="post_result_title",
+    )
+
+    post_result_memo = st.text_area(
+        "投稿後の反応メモ",
+        placeholder="例:\nいいね: 12\n保存: 3\nクリック: 1\n反応が良かった点: 冒頭の悩み訴求\n次に改善する点: CTAをもっと具体的にする",
+        key="post_result_memo",
+        height=160,
+    )
+
+    if st.button("投稿反応メモを保存"):
+        if not post_result_memo.strip():
+            st.warning("投稿後の反応メモを入力してください。")
+        else:
+            saved_path = save_post_result_memo(
+                post_result_title.strip() or "投稿反応メモ",
+                calendar_platform if "calendar_platform" in st.session_state else "SNS",
+                post_result_memo.strip(),
+            )
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"📈 投稿反応メモを保存しました\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("投稿反応メモを保存しました")
             st.rerun()
 
     st.divider()
