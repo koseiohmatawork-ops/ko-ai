@@ -182,6 +182,7 @@ def show_post_stock() -> None:
     sales_funnel_files = sorted(Path("posts/sales_funnels").glob("*.md"), reverse=True)
     stock_cleanup_files = sorted(Path("posts/stock_cleanup").glob("*.md"), reverse=True)
     post_result_files = sorted(Path("posts/results").glob("*.md"), reverse=True)
+    safety_checked_files = sorted(Path("posts/safety_checked").glob("*.md"), reverse=True)
     template_post_files = sorted(Path("posts/template_posts").glob("*.md"), reverse=True)
     archive_files = sorted(Path("posts/archive").glob("*"), reverse=True)
 
@@ -240,6 +241,9 @@ def show_post_stock() -> None:
         post_result_files = [
             file_path for file_path in post_result_files if match_file(file_path)
         ]
+        safety_checked_files = [
+            file_path for file_path in safety_checked_files if match_file(file_path)
+        ]
         archive_files = [
             file_path for file_path in archive_files if file_path.is_file() and match_file(file_path)
         ]
@@ -263,6 +267,7 @@ def show_post_stock() -> None:
         f"販売導線まとめ: {len(sales_funnel_files)}件 / "
         f"投稿ストック整理案: {len(stock_cleanup_files)}件 / "
         f"投稿反応メモ: {len(post_result_files)}件 / "
+        f"安全チェック済み: {len(safety_checked_files)}件 / "
         f"テンプレ投稿: {len(template_post_files)}件 / "
         f"archive: {len(archive_files)}件"
     )
@@ -288,6 +293,7 @@ def show_post_stock() -> None:
         + sales_funnel_files
         + stock_cleanup_files
         + post_result_files
+        + safety_checked_files
         + template_post_files
     )
 
@@ -589,7 +595,22 @@ def show_post_stock() -> None:
                 mime="text/markdown",
                 key=f"download_post_result_{file_path.name}",
             )
-            
+
+    with st.expander("🛡 安全チェック済みストック"):
+        if not safety_checked_files:
+            st.caption("まだ安全チェック済み投稿はありません")
+        for file_path in safety_checked_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "🛡 安全チェック済み投稿をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_safety_checked_{file_path.name}",
+            )
+
     with st.expander("🧩 テンプレ投稿ストック"):
         if not template_post_files:
             st.caption("まだテンプレ投稿はありません")
