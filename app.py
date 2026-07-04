@@ -105,6 +105,9 @@ if "review_text" not in st.session_state:
 if "calendar_theme" not in st.session_state:
     st.session_state.calendar_theme = ""
 
+if "sales_funnel_calendar_source" not in st.session_state:
+    st.session_state.sales_funnel_calendar_source = ""
+
 if "exclude_keywords_text" not in st.session_state:
     st.session_state.exclude_keywords_text = ""
 
@@ -522,6 +525,61 @@ def show_post_stock() -> None:
                 mime="text/plain",
                 key=f"download_archive_{file_path.name}",
             )
+
+
+def create_sales_funnel_calendar(client: OpenAI, sales_funnel_text: str, platform: str) -> str:
+    """販売導線まとめから7日分の投稿カレンダーを作成する。"""
+    prompt = f"""
+あなたはSNS収益化に強い投稿設計アシスタントです。
+以下の販売導線まとめをもとに、{platform}向けの7日分投稿カレンダーを作ってください。
+
+目的:
+- 無料特典への誘導
+- 有料noteへの自然な誘導
+- AI副業・SNS運用・自動化に興味がある人を集める
+- 売り込み感を出しすぎず、保存・共感・行動につながる流れにする
+
+出力形式:
+Day1:
+投稿目的:
+投稿テーマ:
+投稿内容の方向性:
+CTA:
+
+Day2:
+投稿目的:
+投稿テーマ:
+投稿内容の方向性:
+CTA:
+
+Day7まで同じ形式で作成してください。
+
+販売導線まとめ:
+{sales_funnel_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": "あなたはSNS収益化と投稿設計の専門家です。"},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    return response.choices[0].message.content or ""
+
+
+def save_sales_funnel_calendar(platform: str, calendar_text: str) -> Path:
+    """販売導線から作った投稿カレンダーを保存する。"""
+    save_dir = Path("posts/calendars")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_{platform}_sales_funnel_calendar.md"
+    file_path.write_text(calendar_text, encoding="utf-8")
+    return file_path
+
 
 with st.sidebar:
     st.header("📊 現在の状態")
@@ -1097,6 +1155,37 @@ with st.sidebar:
                 }
             )
             st.success("7日分投稿カレンダーを作成・保存しました")
+            st.rerun()
+
+    sales_funnel_calendar_source = st.text_area(
+        "販売導線まとめから7日分カレンダーを作る",
+        placeholder="ここに販売導線まとめストックの内容を貼る",
+        key="sales_funnel_calendar_source",
+        height=180,
+    )
+
+    if st.button("販売導線から7日分カレンダーを作成"):
+        if not sales_funnel_calendar_source.strip():
+            st.warning("販売導線まとめを入力してください。")
+        else:
+            with st.spinner("販売導線から7日分投稿カレンダーを作成中..."):
+                sales_calendar = create_sales_funnel_calendar(
+                    client,
+                    sales_funnel_calendar_source.strip(),
+                    calendar_platform,
+                )
+                saved_path = save_sales_funnel_calendar(
+                    calendar_platform,
+                    sales_calendar,
+                )
+
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"🚀 販売導線から作成した7日分投稿カレンダー\n\n{sales_calendar}\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("販売導線から7日分投稿カレンダーを作成・保存しました")
             st.rerun()
 
     weekly_posts_source = st.text_area(
