@@ -158,6 +158,7 @@ def show_post_stock() -> None:
     paid_note_draft_files = sorted(Path("posts/paid_note_drafts").glob("*.md"), reverse=True)
     sales_funnel_files = sorted(Path("posts/sales_funnels").glob("*.md"), reverse=True)
     stock_cleanup_files = sorted(Path("posts/stock_cleanup").glob("*.md"), reverse=True)
+    archive_files = sorted(Path("posts/archive").glob("*"), reverse=True)
 
     if search_keyword.strip():
         keyword = search_keyword.strip().lower()
@@ -208,6 +209,9 @@ def show_post_stock() -> None:
         stock_cleanup_files = [
             file_path for file_path in stock_cleanup_files if match_file(file_path)
         ]
+        archive_files = [
+            file_path for file_path in archive_files if file_path.is_file() and match_file(file_path)
+        ]
     st.caption(
         f"note記事: {len(note_files)}件 / "
         f"X投稿: {len(x_files)}件 / "
@@ -224,7 +228,8 @@ def show_post_stock() -> None:
         f"無料特典: {len(freebie_files)}件 / "
         f"有料note本文: {len(paid_note_draft_files)}件 / "
         f"販売導線まとめ: {len(sales_funnel_files)}件 / "
-        f"投稿ストック整理案: {len(stock_cleanup_files)}件"
+        f"投稿ストック整理案: {len(stock_cleanup_files)}件 / "
+        f"archive: {len(archive_files)}件"
     )
     
 
@@ -499,6 +504,23 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_stock_cleanup_{file_path.name}",
+            )
+
+    with st.expander("🗄 archiveストック"):
+        if not archive_files:
+            st.caption("まだarchiveに移動したストックはありません")
+        for file_path in archive_files[:20]:
+            if not file_path.is_file():
+                continue
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "🗄 archiveストックをダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/plain",
+                key=f"download_archive_{file_path.name}",
             )
 
 with st.sidebar:
