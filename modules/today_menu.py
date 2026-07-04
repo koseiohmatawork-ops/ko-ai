@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+import shutil
 
 from openai import OpenAI
 
@@ -12,9 +13,61 @@ EXCLUDE_STOCK_KEYWORDS = [
 ]
 
 
-def should_exclude_stock(content: str) -> bool:
+def should_exclude_stock(content: str, keywords: list[str] | None = None) -> bool:
     """今日の投稿メニューや分析に使わないストックを判定する。"""
-    return any(keyword in content for keyword in EXCLUDE_STOCK_KEYWORDS)
+    target_keywords = keywords or EXCLUDE_STOCK_KEYWORDS
+    return any(keyword in content for keyword in target_keywords)
+
+def archive_excluded_stock(keywords: list[str] | None = None) -> list[str]:
+    """除外対象キーワードを含む投稿ストックをarchiveへ移動する。"""
+    stock_folders = [
+        "posts/note",
+        "posts/x",
+        "posts/instagram",
+        "posts/threads",
+        "posts/ideas",
+        "posts/reviewed",
+        "posts/monetization",
+        "posts/paid_note_outlines",
+        "posts/freebies",
+        "posts/paid_note_drafts",
+        "posts/sales_funnels",
+        "posts/calendars",
+        "posts/weekly_posts",
+        "posts/today_menus",
+        "posts/stock_analysis",
+        "posts/stock_cleanup",
+    ]
+
+    moved_files = []
+    archive_dir = Path("posts/archive")
+    archive_dir.mkdir(parents=True, exist_ok=True)
+
+    for folder in stock_folders:
+        folder_path = Path(folder)
+        if not folder_path.exists():
+            continue
+
+        for file_path in folder_path.glob("*"):
+            if not file_path.is_file():
+                continue
+
+            try:
+                content = file_path.read_text(encoding="utf-8")
+            except Exception:
+                continue
+
+            if not should_exclude_stock(content, keywords):
+                continue
+
+            destination = archive_dir / file_path.name
+            if destination.exists():
+                destination = archive_dir / f"{file_path.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{file_path.suffix}"
+
+            shutil.move(str(file_path), str(destination))
+            moved_files.append(f"{file_path} -> {destination}")
+
+    return moved_files
 
 
 def load_recent_stock(max_chars: int = 6000) -> str:

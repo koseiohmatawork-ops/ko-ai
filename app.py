@@ -42,6 +42,7 @@ from modules.post_calendar import (
 )
 
 from modules.today_menu import (
+    archive_excluded_stock,
     create_stock_analysis,
     create_stock_cleanup_plan,
     create_today_post_menu,
@@ -103,6 +104,11 @@ if "review_text" not in st.session_state:
 
 if "calendar_theme" not in st.session_state:
     st.session_state.calendar_theme = ""
+
+if "exclude_keywords_text" not in st.session_state:
+    st.session_state.exclude_keywords_text = ""
+
+
 def handle_memory_input(text: str) -> str | None:
     text = text.strip()
 
@@ -547,6 +553,20 @@ with st.sidebar:
     st.divider()
     st.header("🗂 投稿ストック整理")
 
+    exclude_keywords_text = st.text_area(
+        "archive対象キーワード",
+        key="exclude_keywords_text",
+        height=120,
+        placeholder="例：\n出産二次創作\n炎上\n著作権リスク\n性的",
+        help="1行に1キーワード。ここに入れた言葉を含むストックをarchive対象にします。空欄のままならarchive移動は実行されません。",
+    )
+
+    exclude_keywords = [
+        keyword.strip()
+        for keyword in exclude_keywords_text.splitlines()
+        if keyword.strip()
+    ]
+
     if st.button("投稿ストック整理案を作成"):
         with st.spinner("保存済みストックを整理中..."):
             stock_text = load_recent_stock(max_chars=12000)
@@ -561,6 +581,28 @@ with st.sidebar:
         )
         st.success("投稿ストック整理案を作成・保存しました")
         st.rerun()
+
+    if st.button("リスク高めストックをarchiveへ移動"):
+        if not exclude_keywords:
+            st.warning("archive対象キーワードを1つ以上入力してください。")
+        else:
+            with st.spinner("除外対象ストックをarchiveへ移動中..."):
+                moved_files = archive_excluded_stock(exclude_keywords)
+
+            if moved_files:
+                moved_text = "\n".join(moved_files)
+                st.session_state.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": f"🧹 archiveへ移動したストック\n\n{moved_text}",
+                    }
+                )
+                st.success(f"{len(moved_files)}件をarchiveへ移動しました")
+            else:
+                st.info("archiveへ移動するストックはありませんでした")
+
+            st.rerun()
+
 
     st.divider()
     st.header("🚀 全部生成")
