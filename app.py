@@ -771,6 +771,93 @@ def save_post_result_memo(
     file_path.write_text(content, encoding="utf-8")
     return file_path
 
+def create_post_result_ranking() -> str:
+    """保存済みの投稿反応メモから簡易ランキングを作成する。"""
+    result_files = sorted(Path("posts/results").glob("*.md"), reverse=True)
+
+    if not result_files:
+        return "まだ投稿反応メモがありません。"
+
+    rows = []
+
+    for file_path in result_files[:50]:
+        content = file_path.read_text(encoding="utf-8")
+        title = file_path.stem
+        platform = "不明"
+        impressions = 0
+        likes = 0
+        comments = 0
+        saves = 0
+        profile_clicks = 0
+        link_clicks = 0
+
+        lines = content.splitlines()
+        for index, line in enumerate(lines):
+            line = line.strip()
+            if line == "## 投稿名" and index + 1 < len(lines):
+                title = lines[index + 1].strip() or title
+            elif line == "## 投稿先" and index + 1 < len(lines):
+                platform = lines[index + 1].strip() or platform
+            elif line.startswith("- インプレッション:"):
+                impressions = int(line.replace("- インプレッション:", "").strip() or 0)
+            elif line.startswith("- いいね:"):
+                likes = int(line.replace("- いいね:", "").strip() or 0)
+            elif line.startswith("- コメント:"):
+                comments = int(line.replace("- コメント:", "").strip() or 0)
+            elif line.startswith("- 保存:"):
+                saves = int(line.replace("- 保存:", "").strip() or 0)
+            elif line.startswith("- プロフィールクリック:"):
+                profile_clicks = int(line.replace("- プロフィールクリック:", "").strip() or 0)
+            elif line.startswith("- リンククリック:"):
+                link_clicks = int(line.replace("- リンククリック:", "").strip() or 0)
+
+        reaction_rate = ((likes + comments + saves) / impressions * 100) if impressions else 0
+        save_rate = (saves / impressions * 100) if impressions else 0
+        profile_click_rate = (profile_clicks / impressions * 100) if impressions else 0
+        link_click_rate = (link_clicks / impressions * 100) if impressions else 0
+
+        rows.append(
+            {
+                "title": title,
+                "platform": platform,
+                "impressions": impressions,
+                "likes": likes,
+                "comments": comments,
+                "saves": saves,
+                "profile_clicks": profile_clicks,
+                "link_clicks": link_clicks,
+                "reaction_rate": reaction_rate,
+                "save_rate": save_rate,
+                "profile_click_rate": profile_click_rate,
+                "link_click_rate": link_click_rate,
+            }
+        )
+
+    def format_ranking(metric_key: str, label: str) -> str:
+        ranked_rows = sorted(rows, key=lambda row: row[metric_key], reverse=True)[:5]
+        ranking_lines = [f"## {label}"]
+        for rank, row in enumerate(ranked_rows, start=1):
+            ranking_lines.append(
+                f"{rank}. {row['title']}（{row['platform']}）: {row[metric_key]:.2f}% "
+                f"/ 表示 {row['impressions']} / いいね {row['likes']} / 保存 {row['saves']} / "
+                f"プロフィールクリック {row['profile_clicks']} / リンククリック {row['link_clicks']}"
+            )
+        return "\n".join(ranking_lines)
+
+    result = [
+        "# 📊 投稿反応ランキング",
+        "",
+        format_ranking("reaction_rate", "反応率ランキング"),
+        "",
+        format_ranking("save_rate", "保存率ランキング"),
+        "",
+        format_ranking("profile_click_rate", "プロフィールクリック率ランキング"),
+        "",
+        format_ranking("link_click_rate", "リンククリック率ランキング"),
+    ]
+
+    return "\n".join(result)
+
 def create_template_post(client: OpenAI, theme: str, platform: str, template_type: str) -> str:
     """決まった型に沿って投稿を作成する。"""
     prompt = f"""
@@ -1863,6 +1950,16 @@ with st.sidebar:
             )
             st.success("投稿反応メモを保存しました")
             st.rerun()
+
+    if st.button("投稿反応ランキングを表示", key="show_post_result_ranking_button"):
+        ranking_text = create_post_result_ranking()
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": ranking_text,
+            }
+        )
+        st.rerun()
 
     st.divider()
     st.header("🔥 投稿採点")
