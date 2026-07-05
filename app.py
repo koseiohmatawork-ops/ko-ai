@@ -958,6 +958,18 @@ with st.sidebar:
         st.write("📄 PDFモード: OFF")
 
     st.divider()
+    st.header("🔥 今日やること")
+    st.markdown(
+        """
+1. 📌 今日の投稿メニューを作成
+2. 🧾 今日メニューから実投稿生成
+3. 🛡 X投稿を安全チェック
+4. 投稿する
+5. 📈 投稿後の反応メモを保存
+        """.strip()
+    )
+
+    st.divider()
     st.header("📌 今日の投稿メニュー")
 
     if st.button("今日の投稿メニューを作成"):
