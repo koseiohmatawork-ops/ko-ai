@@ -114,6 +114,24 @@ if "post_result_title" not in st.session_state:
 if "post_result_memo" not in st.session_state:
     st.session_state.post_result_memo = ""
 
+if "post_result_impressions" not in st.session_state:
+    st.session_state.post_result_impressions = 0
+
+if "post_result_likes" not in st.session_state:
+    st.session_state.post_result_likes = 0
+
+if "post_result_comments" not in st.session_state:
+    st.session_state.post_result_comments = 0
+
+if "post_result_saves" not in st.session_state:
+    st.session_state.post_result_saves = 0
+
+if "post_result_profile_clicks" not in st.session_state:
+    st.session_state.post_result_profile_clicks = 0
+
+if "post_result_link_clicks" not in st.session_state:
+    st.session_state.post_result_link_clicks = 0
+
 if "template_post_theme" not in st.session_state:
     st.session_state.template_post_theme = ""
 
@@ -698,7 +716,17 @@ def save_sales_funnel_calendar(platform: str, calendar_text: str) -> Path:
     return file_path
 
 
-def save_post_result_memo(title: str, platform: str, memo: str) -> Path:
+def save_post_result_memo(
+    title: str,
+    platform: str,
+    memo: str,
+    impressions: int = 0,
+    likes: int = 0,
+    comments: int = 0,
+    saves: int = 0,
+    profile_clicks: int = 0,
+    link_clicks: int = 0,
+) -> Path:
     """投稿後の反応メモを保存する。"""
     save_dir = Path("posts/results")
     save_dir.mkdir(parents=True, exist_ok=True)
@@ -708,6 +736,12 @@ def save_post_result_memo(title: str, platform: str, memo: str) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_title = title.strip().replace("/", "_").replace(" ", "_")[:30] or "post_result"
     file_path = save_dir / f"{timestamp}_{platform}_{safe_title}.md"
+
+    reaction_rate = ((likes + comments + saves) / impressions * 100) if impressions else 0
+    save_rate = (saves / impressions * 100) if impressions else 0
+    profile_click_rate = (profile_clicks / impressions * 100) if impressions else 0
+    link_click_rate = (link_clicks / impressions * 100) if impressions else 0
+
     content = f"""
 # 投稿反応メモ
 
@@ -716,6 +750,20 @@ def save_post_result_memo(title: str, platform: str, memo: str) -> Path:
 
 ## 投稿先
 {platform}
+
+## 数字
+- インプレッション: {impressions}
+- いいね: {likes}
+- コメント: {comments}
+- 保存: {saves}
+- プロフィールクリック: {profile_clicks}
+- リンククリック: {link_clicks}
+
+## 自動計算
+- 反応率: {reaction_rate:.2f}%
+- 保存率: {save_rate:.2f}%
+- プロフィールクリック率: {profile_click_rate:.2f}%
+- リンククリック率: {link_click_rate:.2f}%
 
 ## 反応メモ
 {memo}
@@ -1742,6 +1790,49 @@ with st.sidebar:
         key="post_result_title",
     )
 
+    post_result_platform = st.selectbox(
+        "投稿先",
+        ["X", "Instagram", "Threads", "note", "その他"],
+        key="post_result_platform",
+    )
+
+    post_result_impressions = st.number_input(
+        "インプレッション",
+        min_value=0,
+        step=1,
+        key="post_result_impressions",
+    )
+    post_result_likes = st.number_input(
+        "いいね数",
+        min_value=0,
+        step=1,
+        key="post_result_likes",
+    )
+    post_result_comments = st.number_input(
+        "コメント数",
+        min_value=0,
+        step=1,
+        key="post_result_comments",
+    )
+    post_result_saves = st.number_input(
+        "保存数",
+        min_value=0,
+        step=1,
+        key="post_result_saves",
+    )
+    post_result_profile_clicks = st.number_input(
+        "プロフィールクリック数",
+        min_value=0,
+        step=1,
+        key="post_result_profile_clicks",
+    )
+    post_result_link_clicks = st.number_input(
+        "リンククリック数",
+        min_value=0,
+        step=1,
+        key="post_result_link_clicks",
+    )
+
     post_result_memo = st.text_area(
         "投稿後の反応メモ",
         placeholder="例:\nいいね: 12\n保存: 3\nクリック: 1\n反応が良かった点: 冒頭の悩み訴求\n次に改善する点: CTAをもっと具体的にする",
@@ -1754,9 +1845,15 @@ with st.sidebar:
             st.warning("投稿後の反応メモを入力してください。")
         else:
             saved_path = save_post_result_memo(
-                post_result_title.strip() or "投稿反応メモ",
-                calendar_platform if "calendar_platform" in st.session_state else "SNS",
+                post_result_title.strip(),
+                post_result_platform,
                 post_result_memo.strip(),
+                int(post_result_impressions),
+                int(post_result_likes),
+                int(post_result_comments),
+                int(post_result_saves),
+                int(post_result_profile_clicks),
+                int(post_result_link_clicks),
             )
             st.session_state.messages.append(
                 {
