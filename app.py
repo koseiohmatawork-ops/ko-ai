@@ -150,6 +150,12 @@ if "final_post_title" not in st.session_state:
 if "final_post_body" not in st.session_state:
     st.session_state.final_post_body = ""
 
+if "scheduled_post_title" not in st.session_state:
+    st.session_state.scheduled_post_title = ""
+
+if "scheduled_post_body" not in st.session_state:
+    st.session_state.scheduled_post_body = ""
+
 if "exclude_keywords_text" not in st.session_state:
     st.session_state.exclude_keywords_text = ""
 
@@ -1272,6 +1278,34 @@ def save_final_post(title: str, platform: str, post_text: str) -> Path:
     file_path.write_text(post_text, encoding="utf-8")
     return file_path
 
+def save_scheduled_post(title: str, platform: str, status: str, post_text: str) -> Path:
+    """投稿予定リストを保存する。"""
+    save_dir = Path("posts/schedule")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = title.strip().replace("/", "_").replace(" ", "_")[:30] or "scheduled_post"
+    file_path = save_dir / f"{timestamp}_{status}_{platform}_{safe_title}.md"
+
+    content = f"""
+# 投稿予定
+
+## 投稿名
+{title}
+
+## 投稿先
+{platform}
+
+## 状態
+{status}
+
+## 投稿本文
+{post_text}
+""".strip()
+    file_path.write_text(content, encoding="utf-8")
+    return file_path
 
 with st.sidebar:
     st.header("📊 現在の状態")
@@ -1514,6 +1548,50 @@ with st.sidebar:
                 }
             )
             st.success("完成版投稿を保存しました")
+            st.rerun()
+
+    st.divider()
+    st.header("📅 投稿予定リスト")
+    scheduled_post_title = st.text_input(
+        "投稿予定名",
+        placeholder="例: 明日投稿するX投稿",
+        key="scheduled_post_title",
+    )
+    scheduled_post_platform = st.selectbox(
+        "投稿予定の投稿先",
+        ["X", "Instagram", "Threads", "note", "その他"],
+        key="scheduled_post_platform",
+    )
+    scheduled_post_status = st.selectbox(
+        "投稿状態",
+        ["今日投稿", "明日投稿", "保留", "投稿済み"],
+        key="scheduled_post_status",
+    )
+    scheduled_post_body = st.text_area(
+        "投稿予定本文",
+        height=180,
+        placeholder="完成版投稿や投稿予定の本文を貼る",
+        key="scheduled_post_body",
+    )
+    if st.button("投稿予定に保存", key="save_scheduled_post_button"):
+        if not scheduled_post_title.strip():
+            st.warning("投稿予定名を入力してください。")
+        elif not scheduled_post_body.strip():
+            st.warning("投稿予定本文を入力してください。")
+        else:
+            saved_path = save_scheduled_post(
+                scheduled_post_title.strip(),
+                scheduled_post_platform,
+                scheduled_post_status,
+                scheduled_post_body.strip(),
+            )
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"📅 投稿予定に保存しました\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("投稿予定に保存しました")
             st.rerun()
 
     st.divider()
