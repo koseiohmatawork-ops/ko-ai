@@ -61,11 +61,7 @@ st.title("🤖 Ko AI")
 st.caption("自分専用AIアシスタント")
 
 with st.expander("今日使う流れ", expanded=False):
-    st.write("1. 『今日の投稿メニュー』で今日使うネタを決める")
-    st.write("2. 『今日メニュー実投稿』で投稿文を作る")
-    st.write("3. 『安全チェック』で表現を確認する")
-    st.write("4. 『完成版投稿』として保存する")
-    st.write("5. 『投稿ストック』の投稿予定で管理する")
+    st.caption("今日の投稿メニュー → 実投稿生成 → 安全チェック → 完成版保存 → 投稿予定で管理")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
