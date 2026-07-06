@@ -185,6 +185,18 @@ def handle_memory_input(text: str) -> str | None:
 def show_post_stock() -> None:
     st.header("📦 投稿ストック")
 
+    stock_view_category = st.selectbox(
+        "表示するストックカテゴリ",
+        [
+            "全部",
+            "投稿予定",
+            "基本投稿",
+            "収益化・分析",
+            "完成版・チェック済み",
+            "整理・archive",
+        ],
+        key="stock_view_category",
+    )
     search_keyword = st.text_input(
         "投稿ストック検索",
         placeholder="例: AI副業",
@@ -289,33 +301,75 @@ def show_post_stock() -> None:
         archive_files = [
             file_path for file_path in archive_files if file_path.is_file() and match_file(file_path)
         ]
-    st.caption(
-        f"note記事: {len(note_files)}件 / "
-        f"X投稿: {len(x_files)}件 / "
-        f"Instagram投稿: {len(instagram_files)}件 / "
-        f"Threads投稿: {len(threads_files)}件 / "
-        f"アイデア: {len(idea_files)}件 / "
-        f"改善済み投稿: {len(reviewed_files)}件 / "
-        f"収益導線案: {len(monetization_files)}件 / "
-        f"有料note構成案: {len(paid_note_outline_files)}件 / "
-        f"投稿カレンダー: {len(calendar_files)}件 / "
-        f"7日分実投稿: {len(weekly_post_files)}件 / "
-        f"今日の投稿メニュー: {len(today_menu_files)}件 / "
-        f"今日メニュー実投稿: {len(today_menu_post_files)}件 / "
-        f"投稿ストック分析: {len(stock_analysis_files)}件 / "
-        f"分析実投稿: {len(stock_analysis_post_files)}件 / "
-        f"無料特典: {len(freebie_files)}件 / "
-        f"有料note本文: {len(paid_note_draft_files)}件 / "
-        f"販売導線まとめ: {len(sales_funnel_files)}件 / "
-        f"投稿ストック整理案: {len(stock_cleanup_files)}件 / "
-        f"投稿反応メモ: {len(post_result_files)}件 / "
-        f"反応ベース次投稿: {len(result_next_post_files)}件 / "
-        f"完成版投稿: {len(final_post_files)}件 / "
-        f"安全チェック済み: {len(safety_checked_files)}件 / "
-        f"投稿予定: {len(scheduled_post_files)}件 / "
-        f"テンプレ投稿: {len(template_post_files)}件 / "
-        f"archive: {len(archive_files)}件"
+    total_stock_count = (
+        len(note_files)
+        + len(x_files)
+        + len(instagram_files)
+        + len(threads_files)
+        + len(idea_files)
+        + len(reviewed_files)
+        + len(monetization_files)
+        + len(paid_note_outline_files)
+        + len(calendar_files)
+        + len(weekly_post_files)
+        + len(today_menu_files)
+        + len(today_menu_post_files)
+        + len(stock_analysis_files)
+        + len(stock_analysis_post_files)
+        + len(freebie_files)
+        + len(paid_note_draft_files)
+        + len(sales_funnel_files)
+        + len(stock_cleanup_files)
+        + len(post_result_files)
+        + len(result_next_post_files)
+        + len(final_post_files)
+        + len(safety_checked_files)
+        + len(scheduled_post_files)
+        + len(template_post_files)
+        + len(archive_files)
     )
+
+    st.caption(f"現在の表示カテゴリ: {stock_view_category} / ストック合計: {total_stock_count}件")
+
+    with st.expander("📊 ストック件数を見る"):
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.write(f"note記事: {len(note_files)}件")
+            st.write(f"X投稿: {len(x_files)}件")
+            st.write(f"Instagram投稿: {len(instagram_files)}件")
+            st.write(f"Threads投稿: {len(threads_files)}件")
+            st.write(f"アイデア: {len(idea_files)}件")
+            st.write(f"投稿予定: {len(scheduled_post_files)}件")
+            st.write(f"完成版投稿: {len(final_post_files)}件")
+            st.write(f"安全チェック済み: {len(safety_checked_files)}件")
+
+        with col2:
+            st.write(f"改善済み投稿: {len(reviewed_files)}件")
+            st.write(f"収益導線案: {len(monetization_files)}件")
+            st.write(f"有料note構成案: {len(paid_note_outline_files)}件")
+            st.write(f"投稿カレンダー: {len(calendar_files)}件")
+            st.write(f"7日分実投稿: {len(weekly_post_files)}件")
+            st.write(f"今日の投稿メニュー: {len(today_menu_files)}件")
+            st.write(f"今日メニュー実投稿: {len(today_menu_post_files)}件")
+            st.write(f"テンプレ投稿: {len(template_post_files)}件")
+
+        with col3:
+            st.write(f"投稿ストック分析: {len(stock_analysis_files)}件")
+            st.write(f"分析実投稿: {len(stock_analysis_post_files)}件")
+            st.write(f"無料特典: {len(freebie_files)}件")
+            st.write(f"有料note本文: {len(paid_note_draft_files)}件")
+            st.write(f"販売導線まとめ: {len(sales_funnel_files)}件")
+            st.write(f"投稿ストック整理案: {len(stock_cleanup_files)}件")
+            st.write(f"投稿反応メモ: {len(post_result_files)}件")
+            st.write(f"反応ベース次投稿: {len(result_next_post_files)}件")
+            st.write(f"archive: {len(archive_files)}件")
+    show_all_stock = stock_view_category == "全部"
+    show_scheduled_stock = stock_view_category in ["全部", "投稿予定"]
+    show_basic_stock = stock_view_category in ["全部", "基本投稿"]
+    show_monetization_stock = stock_view_category in ["全部", "収益化・分析"]
+    show_final_stock = stock_view_category in ["全部", "完成版・チェック済み"]
+    show_archive_stock = stock_view_category in ["全部", "整理・archive"]
     
 
     all_stock_files = (
@@ -376,632 +430,635 @@ def show_post_stock() -> None:
         elif "## 状態\n投稿済み" in content:
             posted_scheduled_files.append(file_path)
 
-    st.subheader("📌 投稿予定まとめ")
-    st.caption(
-        f"今日投稿: {len(today_scheduled_files)}件 / "
-        f"明日投稿: {len(tomorrow_scheduled_files)}件 / "
-        f"保留: {len(pending_scheduled_files)}件 / "
-        f"投稿済み: {len(posted_scheduled_files)}件"
-    )
+    if show_scheduled_stock:
+        st.subheader("📌 投稿予定まとめ")
+        st.caption(
+            f"今日投稿: {len(today_scheduled_files)}件 / "
+            f"明日投稿: {len(tomorrow_scheduled_files)}件 / "
+            f"保留: {len(pending_scheduled_files)}件 / "
+            f"投稿済み: {len(posted_scheduled_files)}件"
+        )
 
-    with st.expander("📌 今日投稿する予定"):
-        if not today_scheduled_files:
-            st.caption("今日投稿の予定はありません")
-        for file_path in today_scheduled_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            post_body = extract_scheduled_post_body(content)
-            st.subheader(file_path.name)
-            st.text_area(
-                "投稿本文だけコピー用",
-                post_body,
-                height=180,
-                key=f"copy_today_scheduled_body_{file_path.name}",
-            )
-            with st.expander("投稿予定の詳細"):
+        with st.expander("📌 今日投稿する予定"):
+            if not today_scheduled_files:
+                st.caption("今日投稿の予定はありません")
+            for file_path in today_scheduled_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                post_body = extract_scheduled_post_body(content)
+                st.subheader(file_path.name)
+                st.text_area(
+                    "投稿本文だけコピー用",
+                    post_body,
+                    height=180,
+                    key=f"copy_today_scheduled_body_{file_path.name}",
+                )
+                with st.expander("投稿予定の詳細"):
+                    st.write(content)
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if st.button("✅ 投稿済みにする", key=f"mark_posted_{file_path.name}"):
+                        update_scheduled_post_status(file_path, "投稿済み")
+                        st.success("投稿済みに変更しました")
+                        st.rerun()
+
+                with col2:
+                    if st.button("🗑 投稿予定から削除", key=f"delete_today_scheduled_{file_path.name}"):
+                        delete_scheduled_post(file_path)
+                        st.success("投稿予定から削除しました")
+                        st.rerun()
+
+        with st.expander("🌙 明日投稿する予定"):
+            if not tomorrow_scheduled_files:
+                st.caption("明日投稿の予定はありません")
+            for file_path in tomorrow_scheduled_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                post_body = extract_scheduled_post_body(content)
+                st.subheader(file_path.name)
+                st.text_area(
+                    "投稿本文だけコピー用",
+                    post_body,
+                    height=180,
+                    key=f"copy_tomorrow_scheduled_body_{file_path.name}",
+                )
+                with st.expander("投稿予定の詳細"):
+                    st.write(content)
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if st.button("📌 今日投稿にする", key=f"mark_today_{file_path.name}"):
+                        update_scheduled_post_status(file_path, "今日投稿")
+                        st.success("今日投稿に変更しました")
+                        st.rerun()
+
+                with col2:
+                    if st.button("🗑 投稿予定から削除", key=f"delete_tomorrow_scheduled_{file_path.name}"):
+                        delete_scheduled_post(file_path)
+                        st.success("投稿予定から削除しました")
+                        st.rerun()
+
+        with st.expander("⏸ 保留中の投稿"):
+            if not pending_scheduled_files:
+                st.caption("保留中の投稿はありません")
+            for file_path in pending_scheduled_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                post_body = extract_scheduled_post_body(content)
+                st.subheader(file_path.name)
+                st.text_area(
+                    "投稿本文だけコピー用",
+                    post_body,
+                    height=180,
+                    key=f"copy_pending_scheduled_body_{file_path.name}",
+                )
+                with st.expander("投稿予定の詳細"):
+                    st.write(content)
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if st.button("📌 今日投稿にする", key=f"mark_pending_today_{file_path.name}"):
+                        update_scheduled_post_status(file_path, "今日投稿")
+                        st.success("今日投稿に変更しました")
+                        st.rerun()
+
+                with col2:
+                    if st.button("🗑 投稿予定から削除", key=f"delete_pending_scheduled_{file_path.name}"):
+                        delete_scheduled_post(file_path)
+                        st.success("投稿予定から削除しました")
+                        st.rerun()
+
+        with st.expander("✅ 投稿済み"):
+            if not posted_scheduled_files:
+                st.caption("投稿済みの投稿はありません")
+            for file_path in posted_scheduled_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                post_body = extract_scheduled_post_body(content)
+                st.subheader(file_path.name)
+                st.text_area(
+                    "投稿本文だけコピー用",
+                    post_body,
+                    height=180,
+                    key=f"copy_posted_scheduled_body_{file_path.name}",
+                )
+                with st.expander("投稿予定の詳細"):
+                    st.write(content)
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if st.button("📈 反応メモ下書きを作成", key=f"create_result_draft_{file_path.name}"):
+                        saved_path = create_post_result_draft_from_scheduled(file_path)
+                        st.success(f"反応メモ下書きを作成しました: {saved_path}")
+                        st.rerun()
+
+                with col2:
+                    if st.button("🗑 投稿済み一覧から削除", key=f"delete_posted_scheduled_{file_path.name}"):
+                        delete_scheduled_post(file_path)
+                        st.success("投稿済み一覧から削除しました")
+                        st.rerun()
+
+    if show_basic_stock:
+        with st.expander("📝 note記事ストック"):
+            if not note_files:
+                st.caption("まだnote記事はありません")
+            for file_path in note_files[:5]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
                 st.write(content)
 
-            col1, col2 = st.columns(2)
+                col1, col2 = st.columns(2)
 
-            with col1:
-                if st.button("✅ 投稿済みにする", key=f"mark_posted_{file_path.name}"):
-                    update_scheduled_post_status(file_path, "投稿済み")
-                    st.success("投稿済みに変更しました")
-                    st.rerun()
+                with col1:
+                    st.download_button(
+                        "📝 note記事をダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/markdown",
+                        key=f"download_note_{file_path.name}",
+                    )
 
-            with col2:
-                if st.button("🗑 投稿予定から削除", key=f"delete_today_scheduled_{file_path.name}"):
-                    delete_scheduled_post(file_path)
-                    st.success("投稿予定から削除しました")
-                    st.rerun()
+                with col2:
+                    if st.button("🗑 note記事を削除", key=f"delete_note_{file_path.name}"):
+                        delete_stock_file(file_path)
+                        st.success("note記事を削除しました")
+                        st.rerun()
 
-    with st.expander("🌙 明日投稿する予定"):
-        if not tomorrow_scheduled_files:
-            st.caption("明日投稿の予定はありません")
-        for file_path in tomorrow_scheduled_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            post_body = extract_scheduled_post_body(content)
-            st.subheader(file_path.name)
-            st.text_area(
-                "投稿本文だけコピー用",
-                post_body,
-                height=180,
-                key=f"copy_tomorrow_scheduled_body_{file_path.name}",
-            )
-            with st.expander("投稿予定の詳細"):
+        with st.expander("🐦 X投稿ストック"):
+            if not x_files:
+                st.caption("まだX投稿はありません")
+            for file_path in x_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
                 st.write(content)
 
-            col1, col2 = st.columns(2)
+                col1, col2 = st.columns(2)
 
-            with col1:
-                if st.button("📌 今日投稿にする", key=f"mark_today_{file_path.name}"):
-                    update_scheduled_post_status(file_path, "今日投稿")
-                    st.success("今日投稿に変更しました")
-                    st.rerun()
+                with col1:
+                    st.download_button(
+                        "🐦 X投稿をダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/plain",
+                        key=f"download_x_{file_path.name}",
+                    )
 
-            with col2:
-                if st.button("🗑 投稿予定から削除", key=f"delete_tomorrow_scheduled_{file_path.name}"):
-                    delete_scheduled_post(file_path)
-                    st.success("投稿予定から削除しました")
-                    st.rerun()
+                with col2:
+                    if st.button("🗑 X投稿を削除", key=f"delete_x_{file_path.name}"):
+                        delete_stock_file(file_path)
+                        st.success("X投稿を削除しました")
+                        st.rerun()
 
-    with st.expander("⏸ 保留中の投稿"):
-        if not pending_scheduled_files:
-            st.caption("保留中の投稿はありません")
-        for file_path in pending_scheduled_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            post_body = extract_scheduled_post_body(content)
-            st.subheader(file_path.name)
-            st.text_area(
-                "投稿本文だけコピー用",
-                post_body,
-                height=180,
-                key=f"copy_pending_scheduled_body_{file_path.name}",
-            )
-            with st.expander("投稿予定の詳細"):
+        with st.expander("📷 Instagram投稿ストック"):
+            if not instagram_files:
+                st.caption("まだInstagram投稿はありません")
+            for file_path in instagram_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
                 st.write(content)
 
-            col1, col2 = st.columns(2)
+                col1, col2 = st.columns(2)
 
-            with col1:
-                if st.button("📌 今日投稿にする", key=f"mark_pending_today_{file_path.name}"):
-                    update_scheduled_post_status(file_path, "今日投稿")
-                    st.success("今日投稿に変更しました")
-                    st.rerun()
+                with col1:
+                    st.download_button(
+                        "📷 Instagram投稿をダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/markdown",
+                        key=f"download_instagram_{file_path.name}",
+                    )
 
-            with col2:
-                if st.button("🗑 投稿予定から削除", key=f"delete_pending_scheduled_{file_path.name}"):
-                    delete_scheduled_post(file_path)
-                    st.success("投稿予定から削除しました")
-                    st.rerun()
+                with col2:
+                    if st.button("🗑 Instagram投稿を削除", key=f"delete_instagram_{file_path.name}"):
+                        delete_stock_file(file_path)
+                        st.success("Instagram投稿を削除しました")
+                        st.rerun()
 
-    with st.expander("✅ 投稿済み"):
-        if not posted_scheduled_files:
-            st.caption("投稿済みの投稿はありません")
-        for file_path in posted_scheduled_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            post_body = extract_scheduled_post_body(content)
-            st.subheader(file_path.name)
-            st.text_area(
-                "投稿本文だけコピー用",
-                post_body,
-                height=180,
-                key=f"copy_posted_scheduled_body_{file_path.name}",
-            )
-            with st.expander("投稿予定の詳細"):
+        with st.expander("🧵 Threads投稿ストック"):
+            if not threads_files:
+                st.caption("まだThreads投稿はありません")
+            for file_path in threads_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
                 st.write(content)
 
-            col1, col2 = st.columns(2)
+                col1, col2 = st.columns(2)
 
-            with col1:
-                if st.button("📈 反応メモ下書きを作成", key=f"create_result_draft_{file_path.name}"):
-                    saved_path = create_post_result_draft_from_scheduled(file_path)
-                    st.success(f"反応メモ下書きを作成しました: {saved_path}")
-                    st.rerun()
+                with col1:
+                    st.download_button(
+                        "🧵 Threads投稿をダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/plain",
+                        key=f"download_threads_{file_path.name}",
+                    )
 
-            with col2:
-                if st.button("🗑 投稿済み一覧から削除", key=f"delete_posted_scheduled_{file_path.name}"):
-                    delete_scheduled_post(file_path)
-                    st.success("投稿済み一覧から削除しました")
-                    st.rerun()
+                with col2:
+                    if st.button("🗑 Threads投稿を削除", key=f"delete_threads_{file_path.name}"):
+                        delete_stock_file(file_path)
+                        st.success("Threads投稿を削除しました")
+                        st.rerun()
+        with st.expander("💡 アイデアストック"):
+            if not idea_files:
+                st.caption("まだアイデアはありません")
+            for file_path in idea_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
 
-    with st.expander("📝 note記事ストック"):
-        if not note_files:
-            st.caption("まだnote記事はありません")
-        for file_path in note_files[:5]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
+                col1, col2 = st.columns(2)
 
-            col1, col2 = st.columns(2)
+                with col1:
+                    st.download_button(
+                        "💡 アイデアをダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/plain",
+                        key=f"download_idea_{file_path.name}",
+                    )
 
-            with col1:
+                with col2:
+                    if st.button("🗑 アイデアを削除", key=f"delete_idea_{file_path.name}"):
+                        delete_stock_file(file_path)
+                        st.success("アイデアを削除しました")
+                        st.rerun()
+    if show_monetization_stock:
+        with st.expander("✨ 改善済み投稿ストック"):
+            if not reviewed_files:
+                st.caption("まだ改善済み投稿はありません")
+            for file_path in reviewed_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
                 st.download_button(
-                    "📝 note記事をダウンロード",
+                    "✨ 改善済み投稿をダウンロード",
                     data=content,
                     file_name=file_path.name,
                     mime="text/markdown",
-                    key=f"download_note_{file_path.name}",
+                    key=f"download_reviewed_{file_path.name}",
                 )
 
-            with col2:
-                if st.button("🗑 note記事を削除", key=f"delete_note_{file_path.name}"):
-                    delete_stock_file(file_path)
-                    st.success("note記事を削除しました")
-                    st.rerun()
-
-    
-    with st.expander("🐦 X投稿ストック"):
-        if not x_files:
-            st.caption("まだX投稿はありません")
-        for file_path in x_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-
-            col1, col2 = st.columns(2)
-
-            with col1:
+        with st.expander("💰 収益導線ストック"):
+            if not monetization_files:
+                st.caption("まだ収益導線案はありません")
+            for file_path in monetization_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
                 st.download_button(
-                    "🐦 X投稿をダウンロード",
-                    data=content,
-                    file_name=file_path.name,
-                    mime="text/plain",
-                    key=f"download_x_{file_path.name}",
-                )
-
-            with col2:
-                if st.button("🗑 X投稿を削除", key=f"delete_x_{file_path.name}"):
-                    delete_stock_file(file_path)
-                    st.success("X投稿を削除しました")
-                    st.rerun()
-
-    with st.expander("📷 Instagram投稿ストック"):
-        if not instagram_files:
-            st.caption("まだInstagram投稿はありません")
-        for file_path in instagram_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.download_button(
-                    "📷 Instagram投稿をダウンロード",
+                    "💰 収益導線案をダウンロード",
                     data=content,
                     file_name=file_path.name,
                     mime="text/markdown",
-                    key=f"download_instagram_{file_path.name}",
+                    key=f"download_monetization_{file_path.name}",
                 )
 
-            with col2:
-                if st.button("🗑 Instagram投稿を削除", key=f"delete_instagram_{file_path.name}"):
-                    delete_stock_file(file_path)
-                    st.success("Instagram投稿を削除しました")
-                    st.rerun()
-
-    with st.expander("🧵 Threads投稿ストック"):
-        if not threads_files:
-            st.caption("まだThreads投稿はありません")
-        for file_path in threads_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-
-            col1, col2 = st.columns(2)
-
-            with col1:
+        with st.expander("📝 有料note構成ストック"):
+            if not paid_note_outline_files:
+                st.caption("まだ有料note構成案はありません")
+            for file_path in paid_note_outline_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
                 st.download_button(
-                    "🧵 Threads投稿をダウンロード",
-                    data=content,
-                    file_name=file_path.name,
-                    mime="text/plain",
-                    key=f"download_threads_{file_path.name}",
-                )
-
-            with col2:
-                if st.button("🗑 Threads投稿を削除", key=f"delete_threads_{file_path.name}"):
-                    delete_stock_file(file_path)
-                    st.success("Threads投稿を削除しました")
-                    st.rerun()
-    with st.expander("💡 アイデアストック"):
-        if not idea_files:
-            st.caption("まだアイデアはありません")
-        for file_path in idea_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.download_button(
-                    "💡 アイデアをダウンロード",
-                    data=content,
-                    file_name=file_path.name,
-                    mime="text/plain",
-                    key=f"download_idea_{file_path.name}",
-                )
-
-            with col2:
-                if st.button("🗑 アイデアを削除", key=f"delete_idea_{file_path.name}"):
-                    delete_stock_file(file_path)
-                    st.success("アイデアを削除しました")
-                    st.rerun()
-    with st.expander("✨ 改善済み投稿ストック"):
-        if not reviewed_files:
-            st.caption("まだ改善済み投稿はありません")
-        for file_path in reviewed_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "✨ 改善済み投稿をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_reviewed_{file_path.name}",
-            )
-
-    with st.expander("💰 収益導線ストック"):
-        if not monetization_files:
-            st.caption("まだ収益導線案はありません")
-        for file_path in monetization_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "💰 収益導線案をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_monetization_{file_path.name}",
-            )
-
-    with st.expander("📝 有料note構成ストック"):
-        if not paid_note_outline_files:
-            st.caption("まだ有料note構成案はありません")
-        for file_path in paid_note_outline_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "📝 有料note構成案をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_paid_note_outline_{file_path.name}",
-            )
-
-    with st.expander("📅 投稿カレンダーストック"):
-        if not calendar_files:
-            st.caption("まだ投稿カレンダーはありません")
-        for file_path in calendar_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "📅 投稿カレンダーをダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_calendar_{file_path.name}",
-            )
-
-    with st.expander("📝 7日分実投稿ストック"):
-        if not weekly_post_files:
-            st.caption("まだ7日分実投稿はありません")
-        for file_path in weekly_post_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "📝 7日分実投稿をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_weekly_posts_{file_path.name}",
-            )
-
-    with st.expander("📌 今日の投稿メニューストック"):
-        if not today_menu_files:
-            st.caption("まだ今日の投稿メニューはありません")
-        for file_path in today_menu_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "📌 今日の投稿メニューをダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_today_menu_{file_path.name}",
-            )
-
-    with st.expander("🧾 今日メニュー実投稿ストック"):
-        if not today_menu_post_files:
-            st.caption("まだ今日メニュー実投稿はありません")
-        for file_path in today_menu_post_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "🧾 今日メニュー実投稿をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_today_menu_posts_{file_path.name}",
-            )
-
-    with st.expander("📊 投稿ストック分析ストック"):
-        if not stock_analysis_files:
-            st.caption("まだ投稿ストック分析はありません")
-        for file_path in stock_analysis_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "📊 投稿ストック分析をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_stock_analysis_{file_path.name}",
-            )
-
-    with st.expander("📊 分析実投稿ストック"):
-        if not stock_analysis_post_files:
-            st.caption("まだ分析実投稿はありません")
-        for file_path in stock_analysis_post_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "📊 分析実投稿をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_stock_analysis_posts_{file_path.name}",
-            )
-
-    with st.expander("🎁 無料特典ストック"):
-        if not freebie_files:
-            st.caption("まだ無料特典はありません")
-        for file_path in freebie_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "🎁 無料特典をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_freebie_{file_path.name}",
-            )
-
-    with st.expander("📝 有料note本文ストック"):
-        if not paid_note_draft_files:
-            st.caption("まだ有料note本文はありません")
-        for file_path in paid_note_draft_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "📝 有料note本文をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_paid_note_draft_{file_path.name}",
-            )
-
-    with st.expander("🚀 販売導線まとめストック"):
-        if not sales_funnel_files:
-            st.caption("まだ販売導線まとめはありません")
-        for file_path in sales_funnel_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "🚀 販売導線まとめをダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_sales_funnel_{file_path.name}",
-            )
-
-    with st.expander("🗂 投稿ストック整理案ストック"):
-        if not stock_cleanup_files:
-            st.caption("まだ投稿ストック整理案はありません")
-        for file_path in stock_cleanup_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "🗂 投稿ストック整理案をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_stock_cleanup_{file_path.name}",
-            )
-
-    with st.expander("📈 投稿反応メモストック"):
-        if not post_result_files:
-            st.caption("まだ投稿反応メモはありません")
-        for file_path in post_result_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.download_button(
-                    "📈 投稿反応メモをダウンロード",
+                    "📝 有料note構成案をダウンロード",
                     data=content,
                     file_name=file_path.name,
                     mime="text/markdown",
-                    key=f"download_post_result_{file_path.name}",
+                    key=f"download_paid_note_outline_{file_path.name}",
                 )
 
-            with col2:
-                if st.button("🗑 反応メモを削除", key=f"delete_post_result_{file_path.name}"):
-                    delete_post_result_memo(file_path)
-                    st.success("反応メモを削除しました")
-                    st.rerun()
-
-    
-    with st.expander("📝 反応ベース次投稿ストック"):
-        if not result_next_post_files:
-            st.caption("まだ反応ベースの次投稿案はありません")
-        for file_path in result_next_post_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-
-            col1, col2 = st.columns(2)
-
-            with col1:
+        with st.expander("📅 投稿カレンダーストック"):
+            if not calendar_files:
+                st.caption("まだ投稿カレンダーはありません")
+            for file_path in calendar_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
                 st.download_button(
-                    "📝 反応ベース次投稿をダウンロード",
+                    "📅 投稿カレンダーをダウンロード",
                     data=content,
                     file_name=file_path.name,
                     mime="text/markdown",
-                    key=f"download_result_next_post_{file_path.name}",
+                    key=f"download_calendar_{file_path.name}",
                 )
 
-            with col2:
-                if st.button("🗑 次投稿案を削除", key=f"delete_result_next_post_{file_path.name}"):
-                    delete_result_next_post(file_path)
-                    st.success("次投稿案を削除しました")
-                    st.rerun()
-
-    with st.expander("✅ 完成版投稿ストック"):
-        if not final_post_files:
-            st.caption("まだ完成版投稿はありません")
-        for file_path in final_post_files[:20]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(str(file_path))
-            st.write(content)
-
-            col1, col2, col3, col4 = st.columns(4)
-
-            with col1:
+        with st.expander("📝 7日分実投稿ストック"):
+            if not weekly_post_files:
+                st.caption("まだ7日分実投稿はありません")
+            for file_path in weekly_post_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
                 st.download_button(
-                    "✅ ダウンロード",
+                    "📝 7日分実投稿をダウンロード",
                     data=content,
                     file_name=file_path.name,
                     mime="text/markdown",
-                    key=f"download_final_post_{file_path}",
+                    key=f"download_weekly_posts_{file_path.name}",
                 )
 
-            with col2:
-                if st.button("📅 投稿予定に追加", key=f"schedule_final_post_{file_path}"):
-                    saved_path = save_scheduled_post_from_final_post(file_path, "保留")
-                    st.success(f"投稿予定に追加しました: {saved_path}")
-                    st.rerun()
-
-            with col3:
-                if st.button("📌 今日投稿に追加", key=f"schedule_today_final_post_{file_path}"):
-                    saved_path = save_scheduled_post_from_final_post(file_path, "今日投稿")
-                    st.success(f"今日投稿に追加しました: {saved_path}")
-                    st.rerun()
-
-            with col4:
-                if st.button("🗑 削除", key=f"delete_final_post_{file_path}"):
-                    delete_final_post(file_path)
-                    st.success("完成版投稿を削除しました")
-                    st.rerun()
-
-    with st.expander("📅 投稿予定ストック"):
-        if not scheduled_post_files:
-            st.caption("まだ投稿予定はありません")
-        for file_path in scheduled_post_files[:20]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-            st.download_button(
-                "📅 投稿予定をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_scheduled_post_{file_path.name}",
-            )
-
-    with st.expander("🛡 安全チェック済みストック"):
-        if not safety_checked_files:
-            st.caption("まだ安全チェック済み投稿はありません")
-        for file_path in safety_checked_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-
-            col1, col2 = st.columns(2)
-
-            with col1:
+        with st.expander("📌 今日の投稿メニューストック"):
+            if not today_menu_files:
+                st.caption("まだ今日の投稿メニューはありません")
+            for file_path in today_menu_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
                 st.download_button(
-                    "🛡 安全チェック済み投稿をダウンロード",
+                    "📌 今日の投稿メニューをダウンロード",
                     data=content,
                     file_name=file_path.name,
                     mime="text/markdown",
-                    key=f"download_safety_checked_{file_path.name}",
+                    key=f"download_today_menu_{file_path.name}",
                 )
 
-            with col2:
-                if st.button("🗑 安全チェック済み投稿を削除", key=f"delete_safety_checked_{file_path.name}"):
-                    delete_safety_checked_post(file_path)
-                    st.success("安全チェック済み投稿を削除しました")
-                    st.rerun()
-
-    with st.expander("🧩 テンプレ投稿ストック"):
-        if not template_post_files:
-            st.caption("まだテンプレ投稿はありません")
-        for file_path in template_post_files[:10]:
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-
-            col1, col2 = st.columns(2)
-
-            with col1:
+        with st.expander("🧾 今日メニュー実投稿ストック"):
+            if not today_menu_post_files:
+                st.caption("まだ今日メニュー実投稿はありません")
+            for file_path in today_menu_post_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
                 st.download_button(
-                    "🧩 テンプレ投稿をダウンロード",
+                    "🧾 今日メニュー実投稿をダウンロード",
                     data=content,
                     file_name=file_path.name,
                     mime="text/markdown",
-                    key=f"download_template_post_{file_path.name}",
+                    key=f"download_today_menu_posts_{file_path.name}",
                 )
 
-            with col2:
-                if st.button("🗑 テンプレ投稿を削除", key=f"delete_template_post_{file_path.name}"):
-                    delete_template_post(file_path)
-                    st.success("テンプレ投稿を削除しました")
-                    st.rerun()
-
-    with st.expander("🗄 archiveストック"):
-        if not archive_files:
-            st.caption("まだarchiveに移動したストックはありません")
-        for file_path in archive_files[:20]:
-            if not file_path.is_file():
-                continue
-            content = file_path.read_text(encoding="utf-8")
-            st.subheader(file_path.name)
-            st.write(content)
-
-            col1, col2 = st.columns(2)
-
-            with col1:
+        with st.expander("📊 投稿ストック分析ストック"):
+            if not stock_analysis_files:
+                st.caption("まだ投稿ストック分析はありません")
+            for file_path in stock_analysis_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
                 st.download_button(
-                    "🗄 archiveストックをダウンロード",
+                    "📊 投稿ストック分析をダウンロード",
                     data=content,
                     file_name=file_path.name,
-                    mime="text/plain",
-                    key=f"download_archive_{file_path.name}",
+                    mime="text/markdown",
+                    key=f"download_stock_analysis_{file_path.name}",
                 )
 
-            with col2:
-                if st.button("🗑 archiveから削除", key=f"delete_archive_{file_path.name}"):
-                    delete_archive_file(file_path)
-                    st.success("archiveから削除しました")
-                    st.rerun()
+        with st.expander("📊 分析実投稿ストック"):
+            if not stock_analysis_post_files:
+                st.caption("まだ分析実投稿はありません")
+            for file_path in stock_analysis_post_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+                st.download_button(
+                    "📊 分析実投稿をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_stock_analysis_posts_{file_path.name}",
+                )
+
+        with st.expander("🎁 無料特典ストック"):
+            if not freebie_files:
+                st.caption("まだ無料特典はありません")
+            for file_path in freebie_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+                st.download_button(
+                    "🎁 無料特典をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_freebie_{file_path.name}",
+                )
+
+        with st.expander("📝 有料note本文ストック"):
+            if not paid_note_draft_files:
+                st.caption("まだ有料note本文はありません")
+            for file_path in paid_note_draft_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+                st.download_button(
+                    "📝 有料note本文をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_paid_note_draft_{file_path.name}",
+                )
+
+        with st.expander("🚀 販売導線まとめストック"):
+            if not sales_funnel_files:
+                st.caption("まだ販売導線まとめはありません")
+            for file_path in sales_funnel_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+                st.download_button(
+                    "🚀 販売導線まとめをダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_sales_funnel_{file_path.name}",
+                )
+
+        with st.expander("🗂 投稿ストック整理案ストック"):
+            if not stock_cleanup_files:
+                st.caption("まだ投稿ストック整理案はありません")
+            for file_path in stock_cleanup_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+                st.download_button(
+                    "🗂 投稿ストック整理案をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_stock_cleanup_{file_path.name}",
+                )
+
+        with st.expander("📈 投稿反応メモストック"):
+            if not post_result_files:
+                st.caption("まだ投稿反応メモはありません")
+            for file_path in post_result_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.download_button(
+                        "📈 投稿反応メモをダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/markdown",
+                        key=f"download_post_result_{file_path.name}",
+                    )
+
+                with col2:
+                    if st.button("🗑 反応メモを削除", key=f"delete_post_result_{file_path.name}"):
+                        delete_post_result_memo(file_path)
+                        st.success("反応メモを削除しました")
+                        st.rerun()
+
+        with st.expander("📝 反応ベース次投稿ストック"):
+            if not result_next_post_files:
+                st.caption("まだ反応ベースの次投稿案はありません")
+            for file_path in result_next_post_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.download_button(
+                        "📝 反応ベース次投稿をダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/markdown",
+                        key=f"download_result_next_post_{file_path.name}",
+                    )
+
+                with col2:
+                    if st.button("🗑 次投稿案を削除", key=f"delete_result_next_post_{file_path.name}"):
+                        delete_result_next_post(file_path)
+                        st.success("次投稿案を削除しました")
+                        st.rerun()
+
+    if show_final_stock:
+        with st.expander("✅ 完成版投稿ストック"):
+            if not final_post_files:
+                st.caption("まだ完成版投稿はありません")
+            for file_path in final_post_files[:20]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(str(file_path))
+                st.write(content)
+
+                col1, col2, col3, col4 = st.columns(4)
+
+                with col1:
+                    st.download_button(
+                        "✅ ダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/markdown",
+                        key=f"download_final_post_{file_path}",
+                    )
+
+                with col2:
+                    if st.button("📅 投稿予定に追加", key=f"schedule_final_post_{file_path}"):
+                        saved_path = save_scheduled_post_from_final_post(file_path, "保留")
+                        st.success(f"投稿予定に追加しました: {saved_path}")
+                        st.rerun()
+
+                with col3:
+                    if st.button("📌 今日投稿に追加", key=f"schedule_today_final_post_{file_path}"):
+                        saved_path = save_scheduled_post_from_final_post(file_path, "今日投稿")
+                        st.success(f"今日投稿に追加しました: {saved_path}")
+                        st.rerun()
+
+                with col4:
+                    if st.button("🗑 削除", key=f"delete_final_post_{file_path}"):
+                        delete_final_post(file_path)
+                        st.success("完成版投稿を削除しました")
+                        st.rerun()
+
+        with st.expander("📅 投稿予定ストック"):
+            if not scheduled_post_files:
+                st.caption("まだ投稿予定はありません")
+            for file_path in scheduled_post_files[:20]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+                st.download_button(
+                    "📅 投稿予定をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_scheduled_post_{file_path.name}",
+                )
+
+        with st.expander("🛡 安全チェック済みストック"):
+            if not safety_checked_files:
+                st.caption("まだ安全チェック済み投稿はありません")
+            for file_path in safety_checked_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.download_button(
+                        "🛡 安全チェック済み投稿をダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/markdown",
+                        key=f"download_safety_checked_{file_path.name}",
+                    )
+
+                with col2:
+                    if st.button("🗑 安全チェック済み投稿を削除", key=f"delete_safety_checked_{file_path.name}"):
+                        delete_safety_checked_post(file_path)
+                        st.success("安全チェック済み投稿を削除しました")
+                        st.rerun()
+
+        with st.expander("🧩 テンプレ投稿ストック"):
+            if not template_post_files:
+                st.caption("まだテンプレ投稿はありません")
+            for file_path in template_post_files[:10]:
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.download_button(
+                        "🧩 テンプレ投稿をダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/markdown",
+                        key=f"download_template_post_{file_path.name}",
+                    )
+
+                with col2:
+                    if st.button("🗑 テンプレ投稿を削除", key=f"delete_template_post_{file_path.name}"):
+                        delete_template_post(file_path)
+                        st.success("テンプレ投稿を削除しました")
+                        st.rerun()
+
+    if show_archive_stock:
+        with st.expander("🗄 archiveストック"):
+            if not archive_files:
+                st.caption("まだarchiveに移動したストックはありません")
+            for file_path in archive_files[:20]:
+                if not file_path.is_file():
+                    continue
+                content = file_path.read_text(encoding="utf-8")
+                st.subheader(file_path.name)
+                st.write(content)
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.download_button(
+                        "🗄 archiveストックをダウンロード",
+                        data=content,
+                        file_name=file_path.name,
+                        mime="text/plain",
+                        key=f"download_archive_{file_path.name}",
+                    )
+
+                with col2:
+                    if st.button("🗑 archiveから削除", key=f"delete_archive_{file_path.name}"):
+                        delete_archive_file(file_path)
+                        st.success("archiveから削除しました")
+                        st.rerun()
 
 
 def create_sales_funnel_calendar(client: OpenAI, sales_funnel_text: str, platform: str) -> str:
