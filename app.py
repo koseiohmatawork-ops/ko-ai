@@ -185,6 +185,13 @@ def handle_memory_input(text: str) -> str | None:
 def show_post_stock() -> None:
     st.header("📦 投稿ストック")
 
+    with st.expander("使い方", expanded=True):
+        st.write(
+            "投稿予定を確認したい場合は『投稿予定』、投稿素材を探したい場合は『基本投稿』、"
+            "分析や収益化に使う素材を見たい場合は『収益化・分析』を選んでください。"
+        )
+        st.caption("普段は『投稿予定』と『完成版・チェック済み』を中心に見ればOKです。")
+
     stock_view_category = st.selectbox(
         "表示するストックカテゴリ",
         [
