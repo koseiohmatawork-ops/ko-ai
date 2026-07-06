@@ -780,13 +780,23 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            st.download_button(
-                "📈 投稿反応メモをダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_post_result_{file_path.name}",
-            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.download_button(
+                    "📈 投稿反応メモをダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_post_result_{file_path.name}",
+                )
+
+            with col2:
+                if st.button("🗑 反応メモを削除", key=f"delete_post_result_{file_path.name}"):
+                    delete_post_result_memo(file_path)
+                    st.success("反応メモを削除しました")
+                    st.rerun()
 
     with st.expander("📝 反応ベース次投稿ストック"):
         if not result_next_post_files:
@@ -1013,6 +1023,10 @@ def delete_scheduled_post(file_path: Path) -> None:
     if file_path.exists() and file_path.is_file():
         file_path.unlink()
 
+def delete_post_result_memo(file_path: Path) -> None:
+    """投稿反応メモファイルを削除する。"""
+    if file_path.exists() and file_path.is_file():
+        file_path.unlink()
 
 def save_scheduled_post_from_final_post(final_post_file_path: Path, status: str = "保留") -> Path:
     """完成版投稿ファイルを投稿予定として保存する。"""
