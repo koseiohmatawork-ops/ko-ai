@@ -37,6 +37,7 @@ def archive_excluded_stock(keywords: list[str] | None = None) -> list[str]:
         "posts/calendars",
         "posts/weekly_posts",
         "posts/today_menus",
+        "posts/final_posts",
         "posts/stock_analysis",
         "posts/stock_analysis_posts",
         "posts/result_next_posts",
@@ -53,7 +54,12 @@ def archive_excluded_stock(keywords: list[str] | None = None) -> list[str]:
         if not folder_path.exists():
             continue
 
-        for file_path in folder_path.glob("*"):
+        if folder == "posts/final_posts":
+            candidate_files = folder_path.glob("**/*")
+        else:
+            candidate_files = folder_path.glob("*")
+
+        for file_path in candidate_files:
             if not file_path.is_file():
                 continue
 
