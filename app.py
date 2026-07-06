@@ -399,20 +399,23 @@ def show_post_stock() -> None:
         + template_post_files
     )
 
-    if all_stock_files:
-        zip_buffer = io.BytesIO()
+    with st.expander("📦 一括ダウンロード"):
+        if not all_stock_files:
+            st.caption("ダウンロードできる投稿ストックはありません")
+        else:
+            zip_buffer = io.BytesIO()
 
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            for file_path in all_stock_files:
-                zip_file.write(file_path, arcname=str(file_path))
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                for file_path in all_stock_files:
+                    zip_file.write(file_path, arcname=str(file_path))
 
-        st.download_button(
-            "📦 投稿ストックをまとめてZIPダウンロード",
-            data=zip_buffer.getvalue(),
-            file_name="ko_ai_post_stock.zip",
-            mime="application/zip",
-            key="download_all_post_stock_zip",
-        )
+            st.download_button(
+                "📦 投稿ストックをまとめてZIPダウンロード",
+                data=zip_buffer.getvalue(),
+                file_name="ko_ai_post_stock.zip",
+                mime="application/zip",
+                key="download_all_post_stock_zip",
+            )
 
     today_scheduled_files = []
     tomorrow_scheduled_files = []
