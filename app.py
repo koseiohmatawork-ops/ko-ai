@@ -391,6 +391,10 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
+            if st.button("✅ 投稿済みにする", key=f"mark_posted_{file_path.name}"):
+                update_scheduled_post_status(file_path, "投稿済み")
+                st.success("投稿済みに変更しました")
+                st.rerun()
 
     with st.expander("🌙 明日投稿する予定"):
         if not tomorrow_scheduled_files:
@@ -399,6 +403,10 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
+            if st.button("📌 今日投稿にする", key=f"mark_today_{file_path.name}"):
+                update_scheduled_post_status(file_path, "今日投稿")
+                st.success("今日投稿に変更しました")
+                st.rerun()
 
     with st.expander("⏸ 保留中の投稿"):
         if not pending_scheduled_files:
@@ -407,6 +415,10 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
+            if st.button("📌 今日投稿にする", key=f"mark_pending_today_{file_path.name}"):
+                update_scheduled_post_status(file_path, "今日投稿")
+                st.success("今日投稿に変更しました")
+                st.rerun()
 
     with st.expander("✅ 投稿済み"):
         if not posted_scheduled_files:
@@ -1382,6 +1394,20 @@ def save_scheduled_post(title: str, platform: str, status: str, post_text: str) 
 {post_text}
 """.strip()
     file_path.write_text(content, encoding="utf-8")
+    return file_path
+
+def update_scheduled_post_status(file_path: Path, new_status: str) -> Path:
+    """投稿予定の状態を更新する。"""
+    content = file_path.read_text(encoding="utf-8")
+    lines = content.splitlines()
+
+    for index, line in enumerate(lines):
+        if line.strip() == "## 状態" and index + 1 < len(lines):
+            lines[index + 1] = new_status
+            break
+
+    updated_content = "\n".join(lines).strip()
+    file_path.write_text(updated_content, encoding="utf-8")
     return file_path
 
 with st.sidebar:
