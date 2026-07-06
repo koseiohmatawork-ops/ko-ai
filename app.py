@@ -207,6 +207,7 @@ def show_post_stock() -> None:
     stock_cleanup_files = sorted(Path("posts/stock_cleanup").glob("*.md"), reverse=True)
     post_result_files = sorted(Path("posts/results").glob("*.md"), reverse=True)
     result_next_post_files = sorted(Path("posts/result_next_posts").glob("*.md"), reverse=True)
+    final_post_files = sorted(Path("posts/final_posts").glob("**/*.md"), reverse=True)
     safety_checked_files = sorted(Path("posts/safety_checked").glob("*.md"), reverse=True)
     template_post_files = sorted(Path("posts/template_posts").glob("*.md"), reverse=True)
     archive_files = sorted(Path("posts/archive").glob("*"), reverse=True)
@@ -269,6 +270,9 @@ def show_post_stock() -> None:
         result_next_post_files = [
             file_path for file_path in result_next_post_files if match_file(file_path)
         ]
+        final_post_files = [
+            file_path for file_path in final_post_files if match_file(file_path)
+        ]
         safety_checked_files = [
             file_path for file_path in safety_checked_files if match_file(file_path)
         ]
@@ -296,6 +300,7 @@ def show_post_stock() -> None:
         f"投稿ストック整理案: {len(stock_cleanup_files)}件 / "
         f"投稿反応メモ: {len(post_result_files)}件 / "
         f"反応ベース次投稿: {len(result_next_post_files)}件 / "
+        f"完成版投稿: {len(final_post_files)}件 / "
         f"安全チェック済み: {len(safety_checked_files)}件 / "
         f"テンプレ投稿: {len(template_post_files)}件 / "
         f"archive: {len(archive_files)}件"
@@ -323,6 +328,7 @@ def show_post_stock() -> None:
         + stock_cleanup_files
         + post_result_files
         + result_next_post_files
+        + final_post_files
         + safety_checked_files
         + template_post_files
     )
@@ -639,6 +645,21 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_result_next_post_{file_path.name}",
+            )
+
+    with st.expander("✅ 完成版投稿ストック"):
+        if not final_post_files:
+            st.caption("まだ完成版投稿はありません")
+        for file_path in final_post_files[:20]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(str(file_path))
+            st.write(content)
+            st.download_button(
+                "✅ 完成版投稿をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_final_post_{file_path}",
             )
 
     with st.expander("🛡 安全チェック済みストック"):
