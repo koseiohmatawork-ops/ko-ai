@@ -883,13 +883,23 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            st.download_button(
-                "🛡 安全チェック済み投稿をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_safety_checked_{file_path.name}",
-            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.download_button(
+                    "🛡 安全チェック済み投稿をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_safety_checked_{file_path.name}",
+                )
+
+            with col2:
+                if st.button("🗑 安全チェック済み投稿を削除", key=f"delete_safety_checked_{file_path.name}"):
+                    delete_safety_checked_post(file_path)
+                    st.success("安全チェック済み投稿を削除しました")
+                    st.rerun()
 
     with st.expander("🧩 テンプレ投稿ストック"):
         if not template_post_files:
@@ -1052,6 +1062,11 @@ def delete_result_next_post(file_path: Path) -> None:
 
 def delete_final_post(file_path: Path) -> None:
     """完成版投稿ファイルを削除する。"""
+    if file_path.exists() and file_path.is_file():
+        file_path.unlink()
+
+def delete_safety_checked_post(file_path: Path) -> None:
+    """安全チェック済み投稿ファイルを削除する。"""
     if file_path.exists() and file_path.is_file():
         file_path.unlink()
 
