@@ -908,13 +908,23 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            st.download_button(
-                "🧩 テンプレ投稿をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_template_post_{file_path.name}",
-            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.download_button(
+                    "🧩 テンプレ投稿をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_template_post_{file_path.name}",
+                )
+
+            with col2:
+                if st.button("🗑 テンプレ投稿を削除", key=f"delete_template_post_{file_path.name}"):
+                    delete_template_post(file_path)
+                    st.success("テンプレ投稿を削除しました")
+                    st.rerun()
 
     with st.expander("🗄 archiveストック"):
         if not archive_files:
@@ -925,13 +935,23 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            st.download_button(
-                "🗄 archiveストックをダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/plain",
-                key=f"download_archive_{file_path.name}",
-            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.download_button(
+                    "🗄 archiveストックをダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/plain",
+                    key=f"download_archive_{file_path.name}",
+                )
+
+            with col2:
+                if st.button("🗑 archiveから削除", key=f"delete_archive_{file_path.name}"):
+                    delete_archive_file(file_path)
+                    st.success("archiveから削除しました")
+                    st.rerun()
 
 
 def create_sales_funnel_calendar(client: OpenAI, sales_funnel_text: str, platform: str) -> str:
@@ -1067,6 +1087,16 @@ def delete_final_post(file_path: Path) -> None:
 
 def delete_safety_checked_post(file_path: Path) -> None:
     """安全チェック済み投稿ファイルを削除する。"""
+    if file_path.exists() and file_path.is_file():
+        file_path.unlink()
+
+def delete_template_post(file_path: Path) -> None:
+    """テンプレ投稿ファイルを削除する。"""
+    if file_path.exists() and file_path.is_file():
+        file_path.unlink()
+
+def delete_archive_file(file_path: Path) -> None:
+    """archiveファイルを削除する。"""
     if file_path.exists() and file_path.is_file():
         file_path.unlink()
 
