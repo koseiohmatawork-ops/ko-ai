@@ -489,10 +489,20 @@ def show_post_stock() -> None:
             )
             with st.expander("投稿予定の詳細"):
                 st.write(content)
-            if st.button("🗑 投稿済み一覧から削除", key=f"delete_posted_scheduled_{file_path.name}"):
-                delete_scheduled_post(file_path)
-                st.success("投稿済み一覧から削除しました")
-                st.rerun()
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("📈 反応メモ下書きを作成", key=f"create_result_draft_{file_path.name}"):
+                    saved_path = create_post_result_draft_from_scheduled(file_path)
+                    st.success(f"反応メモ下書きを作成しました: {saved_path}")
+                    st.rerun()
+
+            with col2:
+                if st.button("🗑 投稿済み一覧から削除", key=f"delete_posted_scheduled_{file_path.name}"):
+                    delete_scheduled_post(file_path)
+                    st.success("投稿済み一覧から削除しました")
+                    st.rerun()
 
     with st.expander("📝 note記事ストック"):
         if not note_files:
@@ -941,6 +951,54 @@ def save_sales_funnel_calendar(platform: str, calendar_text: str) -> Path:
     return file_path
 
 
+
+
+# --- 追加: 投稿予定ファイルから項目抽出・反応メモ下書き生成 ---
+def extract_scheduled_post_field(content: str, field_name: str) -> str:
+    """投稿予定ファイルから指定した項目を取り出す。"""
+    marker = f"## {field_name}"
+    if marker not in content:
+        return ""
+
+    after_marker = content.split(marker, 1)[1].strip()
+    lines = []
+    for line in after_marker.splitlines():
+        if line.startswith("## "):
+            break
+        lines.append(line)
+
+    return "\n".join(lines).strip()
+
+
+def create_post_result_draft_from_scheduled(file_path: Path) -> Path:
+    """投稿済み予定から反応メモの下書きを作成する。"""
+    content = file_path.read_text(encoding="utf-8")
+    title = extract_scheduled_post_field(content, "投稿名") or file_path.stem
+    platform = extract_scheduled_post_field(content, "投稿先") or "不明"
+    post_body = extract_scheduled_post_body(content)
+
+    memo = f"""
+## 元投稿
+{post_body}
+
+## 気づき
+- 
+
+## 次に活かすこと
+- 
+""".strip()
+
+    return save_post_result_memo(
+        title=title,
+        platform=platform,
+        memo=memo,
+        impressions=0,
+        likes=0,
+        comments=0,
+        saves=0,
+        profile_clicks=0,
+        link_clicks=0,
+    )
 
 
 def extract_scheduled_post_body(content: str) -> str:
