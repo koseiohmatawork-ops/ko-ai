@@ -389,8 +389,16 @@ def show_post_stock() -> None:
             st.caption("今日投稿の予定はありません")
         for file_path in today_scheduled_files[:10]:
             content = file_path.read_text(encoding="utf-8")
+            post_body = extract_scheduled_post_body(content)
             st.subheader(file_path.name)
-            st.write(content)
+            st.text_area(
+                "投稿本文だけコピー用",
+                post_body,
+                height=180,
+                key=f"copy_today_scheduled_body_{file_path.name}",
+            )
+            with st.expander("投稿予定の詳細"):
+                st.write(content)
 
             col1, col2 = st.columns(2)
 
@@ -411,8 +419,16 @@ def show_post_stock() -> None:
             st.caption("明日投稿の予定はありません")
         for file_path in tomorrow_scheduled_files[:10]:
             content = file_path.read_text(encoding="utf-8")
+            post_body = extract_scheduled_post_body(content)
             st.subheader(file_path.name)
-            st.write(content)
+            st.text_area(
+                "投稿本文だけコピー用",
+                post_body,
+                height=180,
+                key=f"copy_tomorrow_scheduled_body_{file_path.name}",
+            )
+            with st.expander("投稿予定の詳細"):
+                st.write(content)
 
             col1, col2 = st.columns(2)
 
@@ -433,8 +449,16 @@ def show_post_stock() -> None:
             st.caption("保留中の投稿はありません")
         for file_path in pending_scheduled_files[:10]:
             content = file_path.read_text(encoding="utf-8")
+            post_body = extract_scheduled_post_body(content)
             st.subheader(file_path.name)
-            st.write(content)
+            st.text_area(
+                "投稿本文だけコピー用",
+                post_body,
+                height=180,
+                key=f"copy_pending_scheduled_body_{file_path.name}",
+            )
+            with st.expander("投稿予定の詳細"):
+                st.write(content)
 
             col1, col2 = st.columns(2)
 
@@ -455,8 +479,16 @@ def show_post_stock() -> None:
             st.caption("投稿済みの投稿はありません")
         for file_path in posted_scheduled_files[:10]:
             content = file_path.read_text(encoding="utf-8")
+            post_body = extract_scheduled_post_body(content)
             st.subheader(file_path.name)
-            st.write(content)
+            st.text_area(
+                "投稿本文だけコピー用",
+                post_body,
+                height=180,
+                key=f"copy_posted_scheduled_body_{file_path.name}",
+            )
+            with st.expander("投稿予定の詳細"):
+                st.write(content)
             if st.button("🗑 投稿済み一覧から削除", key=f"delete_posted_scheduled_{file_path.name}"):
                 delete_scheduled_post(file_path)
                 st.success("投稿済み一覧から削除しました")
@@ -909,6 +941,14 @@ def save_sales_funnel_calendar(platform: str, calendar_text: str) -> Path:
     return file_path
 
 
+
+
+def extract_scheduled_post_body(content: str) -> str:
+    """投稿予定ファイルから投稿本文だけを取り出す。"""
+    marker = "## 投稿本文"
+    if marker not in content:
+        return content
+    return content.split(marker, 1)[1].strip()
 
 def delete_scheduled_post(file_path: Path) -> None:
     """投稿予定ファイルを削除する。"""
