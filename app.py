@@ -391,10 +391,20 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            if st.button("✅ 投稿済みにする", key=f"mark_posted_{file_path.name}"):
-                update_scheduled_post_status(file_path, "投稿済み")
-                st.success("投稿済みに変更しました")
-                st.rerun()
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("✅ 投稿済みにする", key=f"mark_posted_{file_path.name}"):
+                    update_scheduled_post_status(file_path, "投稿済み")
+                    st.success("投稿済みに変更しました")
+                    st.rerun()
+
+            with col2:
+                if st.button("🗑 投稿予定から削除", key=f"delete_today_scheduled_{file_path.name}"):
+                    delete_scheduled_post(file_path)
+                    st.success("投稿予定から削除しました")
+                    st.rerun()
 
     with st.expander("🌙 明日投稿する予定"):
         if not tomorrow_scheduled_files:
@@ -403,10 +413,20 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            if st.button("📌 今日投稿にする", key=f"mark_today_{file_path.name}"):
-                update_scheduled_post_status(file_path, "今日投稿")
-                st.success("今日投稿に変更しました")
-                st.rerun()
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("📌 今日投稿にする", key=f"mark_today_{file_path.name}"):
+                    update_scheduled_post_status(file_path, "今日投稿")
+                    st.success("今日投稿に変更しました")
+                    st.rerun()
+
+            with col2:
+                if st.button("🗑 投稿予定から削除", key=f"delete_tomorrow_scheduled_{file_path.name}"):
+                    delete_scheduled_post(file_path)
+                    st.success("投稿予定から削除しました")
+                    st.rerun()
 
     with st.expander("⏸ 保留中の投稿"):
         if not pending_scheduled_files:
@@ -415,10 +435,20 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            if st.button("📌 今日投稿にする", key=f"mark_pending_today_{file_path.name}"):
-                update_scheduled_post_status(file_path, "今日投稿")
-                st.success("今日投稿に変更しました")
-                st.rerun()
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("📌 今日投稿にする", key=f"mark_pending_today_{file_path.name}"):
+                    update_scheduled_post_status(file_path, "今日投稿")
+                    st.success("今日投稿に変更しました")
+                    st.rerun()
+
+            with col2:
+                if st.button("🗑 投稿予定から削除", key=f"delete_pending_scheduled_{file_path.name}"):
+                    delete_scheduled_post(file_path)
+                    st.success("投稿予定から削除しました")
+                    st.rerun()
 
     with st.expander("✅ 投稿済み"):
         if not posted_scheduled_files:
@@ -427,6 +457,10 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
+            if st.button("🗑 投稿済み一覧から削除", key=f"delete_posted_scheduled_{file_path.name}"):
+                delete_scheduled_post(file_path)
+                st.success("投稿済み一覧から削除しました")
+                st.rerun()
 
     with st.expander("📝 note記事ストック"):
         if not note_files:
@@ -734,13 +768,29 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(str(file_path))
             st.write(content)
-            st.download_button(
-                "✅ 完成版投稿をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_final_post_{file_path}",
-            )
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.download_button(
+                    "✅ 完成版投稿をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_final_post_{file_path}",
+                )
+
+            with col2:
+                if st.button("📅 投稿予定に追加", key=f"schedule_final_post_{file_path}"):
+                    saved_path = save_scheduled_post_from_final_post(file_path, "保留")
+                    st.success(f"投稿予定に追加しました: {saved_path}")
+                    st.rerun()
+
+            with col3:
+                if st.button("📌 今日投稿に追加", key=f"schedule_today_final_post_{file_path}"):
+                    saved_path = save_scheduled_post_from_final_post(file_path, "今日投稿")
+                    st.success(f"今日投稿に追加しました: {saved_path}")
+                    st.rerun()
 
     with st.expander("📅 投稿予定ストック"):
         if not scheduled_post_files:
@@ -856,6 +906,51 @@ def save_sales_funnel_calendar(platform: str, calendar_text: str) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_path = save_dir / f"{timestamp}_{platform}_sales_funnel_calendar.md"
     file_path.write_text(calendar_text, encoding="utf-8")
+    return file_path
+
+
+
+def delete_scheduled_post(file_path: Path) -> None:
+    """投稿予定ファイルを削除する。"""
+    if file_path.exists() and file_path.is_file():
+        file_path.unlink()
+
+
+def save_scheduled_post_from_final_post(final_post_file_path: Path, status: str = "保留") -> Path:
+    """完成版投稿ファイルを投稿予定として保存する。"""
+    save_dir = Path("posts/schedule")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    platform = final_post_file_path.parent.name
+    title = final_post_file_path.stem
+    safe_title = title.strip().replace("/", "_").replace(" ", "_")[:40] or "scheduled_post"
+    file_path = save_dir / f"{timestamp}_{platform}_{safe_title}.md"
+
+    body = final_post_file_path.read_text(encoding="utf-8")
+
+    content = f"""
+# 投稿予定
+
+## 投稿名
+{title}
+
+## 投稿先
+{platform}
+
+## 状態
+{status}
+
+## 元ファイル
+{final_post_file_path}
+
+## 投稿本文
+{body}
+""".strip()
+
+    file_path.write_text(content, encoding="utf-8")
     return file_path
 
 
