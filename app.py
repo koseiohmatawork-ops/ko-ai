@@ -202,6 +202,7 @@ def show_post_stock() -> None:
             "完成版・チェック済み",
             "整理・archive",
         ],
+        index=1,
         key="stock_view_category",
     )
     search_keyword = st.text_input(
