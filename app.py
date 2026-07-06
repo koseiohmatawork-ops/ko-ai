@@ -923,13 +923,20 @@ def save_scheduled_post_from_final_post(final_post_file_path: Path, status: str 
 
     from datetime import datetime
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     platform = final_post_file_path.parent.name
     title = final_post_file_path.stem
+
+    for existing_file_path in save_dir.glob("*.md"):
+        existing_content = existing_file_path.read_text(encoding="utf-8")
+        if f"## 元ファイル\n{final_post_file_path}" in existing_content:
+            update_scheduled_post_status(existing_file_path, status)
+            return existing_file_path
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_title = title.strip().replace("/", "_").replace(" ", "_")[:40] or "scheduled_post"
     file_path = save_dir / f"{timestamp}_{platform}_{safe_title}.md"
 
-    body = final_post_file_path.read_text(encoding="utf-8")
+    body = final_post_file_path.read_text(encoding="utf-8")   
 
     content = f"""
 # 投稿予定
