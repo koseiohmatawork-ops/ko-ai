@@ -38,6 +38,7 @@ def archive_excluded_stock(keywords: list[str] | None = None) -> list[str]:
         "posts/today_menus",
         "posts/stock_analysis",
         "posts/stock_analysis_posts",
+        "posts/result_next_posts",
         "posts/stock_cleanup",
         "posts/safety_checked",
     ]
