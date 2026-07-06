@@ -907,6 +907,60 @@ def create_post_result_insight(client: OpenAI) -> str:
     return response.choices[0].message.content or ""
 
 
+def create_next_posts_from_result(client: OpenAI) -> str:
+    """投稿反応メモをもとに次に投稿する案を作成する。"""
+    result_files = sorted(Path("posts/results").glob("*.md"), reverse=True)
+
+    if not result_files:
+        return "まだ投稿反応メモがありません。"
+
+    result_texts = []
+    for file_path in result_files[:20]:
+        content = file_path.read_text(encoding="utf-8")
+        result_texts.append(f"## {file_path.name}\n{content}")
+
+    results_text = "\n\n---\n\n".join(result_texts)
+
+    prompt = f"""
+あなたはSNS投稿作成と改善の担当です。
+以下の投稿反応メモをもとに、次に投稿するべき内容を具体的に作ってください。
+
+目的:
+- 反応が良かった投稿パターンを活かす
+- 保存率・プロフィールクリック率・リンククリック率を上げる
+- 無料特典やプロフィールリンクへの導線を自然に入れる
+- 顔出しなしでも投稿できる内容にする
+- 実績や収益を断定しない
+- 「誰でも稼げる」「必ず月◯万円」などの収益保証表現は避ける
+
+出力形式:
+1. 次に狙う投稿テーマTOP3
+2. X投稿案3本
+3. Instagramカルーセル案1本
+   - 1枚目
+   - 2枚目
+   - 3枚目
+   - 4枚目
+   - 5枚目
+   - キャプション
+4. Threads投稿案1本
+5. 無料特典への自然な誘導文
+6. 投稿前の注意点
+
+投稿反応メモ:
+{results_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": "あなたはSNS投稿改善と投稿作成の専門家です。"},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    return response.choices[0].message.content or ""
+
+
 def create_template_post(client: OpenAI, theme: str, platform: str, template_type: str) -> str:
     """決まった型に沿って投稿を作成する。"""
     prompt = f"""
@@ -2017,6 +2071,17 @@ with st.sidebar:
             {
                 "role": "assistant",
                 "content": f"📊 投稿反応から作成した改善案\n\n{insight_text}",
+            }
+        )
+        st.rerun()
+
+    if st.button("投稿反応から次の投稿を作成", key="create_next_posts_from_result_button"):
+        with st.spinner("投稿反応メモから次の投稿案を作成中..."):
+            next_posts_text = create_next_posts_from_result(client)
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": f"📝 投稿反応から作成した次の投稿案\n\n{next_posts_text}",
             }
         )
         st.rerun()
