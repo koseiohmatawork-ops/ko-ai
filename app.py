@@ -214,6 +214,7 @@ def show_post_stock() -> None:
     post_result_files = sorted(Path("posts/results").glob("*.md"), reverse=True)
     result_next_post_files = sorted(Path("posts/result_next_posts").glob("*.md"), reverse=True)
     final_post_files = sorted(Path("posts/final_posts").glob("**/*.md"), reverse=True)
+    scheduled_post_files = sorted(Path("posts/schedule").glob("*.md"), reverse=True)
     safety_checked_files = sorted(Path("posts/safety_checked").glob("*.md"), reverse=True)
     template_post_files = sorted(Path("posts/template_posts").glob("*.md"), reverse=True)
     archive_files = sorted(Path("posts/archive").glob("*"), reverse=True)
@@ -279,6 +280,9 @@ def show_post_stock() -> None:
         final_post_files = [
             file_path for file_path in final_post_files if match_file(file_path)
         ]
+        scheduled_post_files = [
+            file_path for file_path in scheduled_post_files if match_file(file_path)
+        ]
         safety_checked_files = [
             file_path for file_path in safety_checked_files if match_file(file_path)
         ]
@@ -308,6 +312,7 @@ def show_post_stock() -> None:
         f"反応ベース次投稿: {len(result_next_post_files)}件 / "
         f"完成版投稿: {len(final_post_files)}件 / "
         f"安全チェック済み: {len(safety_checked_files)}件 / "
+        f"投稿予定: {len(scheduled_post_files)}件 / "
         f"テンプレ投稿: {len(template_post_files)}件 / "
         f"archive: {len(archive_files)}件"
     )
@@ -334,6 +339,7 @@ def show_post_stock() -> None:
         + stock_cleanup_files
         + post_result_files
         + result_next_post_files
+        + scheduled_post_files
         + final_post_files
         + safety_checked_files
         + template_post_files
@@ -353,6 +359,62 @@ def show_post_stock() -> None:
             mime="application/zip",
             key="download_all_post_stock_zip",
         )
+
+    today_scheduled_files = []
+    tomorrow_scheduled_files = []
+    pending_scheduled_files = []
+    posted_scheduled_files = []
+
+    for file_path in scheduled_post_files:
+        content = file_path.read_text(encoding="utf-8")
+        if "## 状態\n今日投稿" in content:
+            today_scheduled_files.append(file_path)
+        elif "## 状態\n明日投稿" in content:
+            tomorrow_scheduled_files.append(file_path)
+        elif "## 状態\n保留" in content:
+            pending_scheduled_files.append(file_path)
+        elif "## 状態\n投稿済み" in content:
+            posted_scheduled_files.append(file_path)
+
+    st.subheader("📌 投稿予定まとめ")
+    st.caption(
+        f"今日投稿: {len(today_scheduled_files)}件 / "
+        f"明日投稿: {len(tomorrow_scheduled_files)}件 / "
+        f"保留: {len(pending_scheduled_files)}件 / "
+        f"投稿済み: {len(posted_scheduled_files)}件"
+    )
+
+    with st.expander("📌 今日投稿する予定"):
+        if not today_scheduled_files:
+            st.caption("今日投稿の予定はありません")
+        for file_path in today_scheduled_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+
+    with st.expander("🌙 明日投稿する予定"):
+        if not tomorrow_scheduled_files:
+            st.caption("明日投稿の予定はありません")
+        for file_path in tomorrow_scheduled_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+
+    with st.expander("⏸ 保留中の投稿"):
+        if not pending_scheduled_files:
+            st.caption("保留中の投稿はありません")
+        for file_path in pending_scheduled_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+
+    with st.expander("✅ 投稿済み"):
+        if not posted_scheduled_files:
+            st.caption("投稿済みの投稿はありません")
+        for file_path in posted_scheduled_files[:10]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
 
     with st.expander("📝 note記事ストック"):
         if not note_files:
@@ -666,6 +728,21 @@ def show_post_stock() -> None:
                 file_name=file_path.name,
                 mime="text/markdown",
                 key=f"download_final_post_{file_path}",
+            )
+
+    with st.expander("📅 投稿予定ストック"):
+        if not scheduled_post_files:
+            st.caption("まだ投稿予定はありません")
+        for file_path in scheduled_post_files[:20]:
+            content = file_path.read_text(encoding="utf-8")
+            st.subheader(file_path.name)
+            st.write(content)
+            st.download_button(
+                "📅 投稿予定をダウンロード",
+                data=content,
+                file_name=file_path.name,
+                mime="text/markdown",
+                key=f"download_scheduled_post_{file_path.name}",
             )
 
     with st.expander("🛡 安全チェック済みストック"):
