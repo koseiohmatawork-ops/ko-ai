@@ -511,13 +511,23 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            st.download_button(
-                "📝 note記事をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_note_{file_path.name}",
-            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.download_button(
+                    "📝 note記事をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_note_{file_path.name}",
+                )
+
+            with col2:
+                if st.button("🗑 note記事を削除", key=f"delete_note_{file_path.name}"):
+                    delete_stock_file(file_path)
+                    st.success("note記事を削除しました")
+                    st.rerun()
 
     
     with st.expander("🐦 X投稿ストック"):
@@ -527,13 +537,23 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            st.download_button(
-                "🐦 X投稿をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/plain",
-                key=f"download_x_{file_path.name}",
-            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.download_button(
+                    "🐦 X投稿をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/plain",
+                    key=f"download_x_{file_path.name}",
+                )
+
+            with col2:
+                if st.button("🗑 X投稿を削除", key=f"delete_x_{file_path.name}"):
+                    delete_stock_file(file_path)
+                    st.success("X投稿を削除しました")
+                    st.rerun()
 
     with st.expander("📷 Instagram投稿ストック"):
         if not instagram_files:
@@ -542,13 +562,23 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            st.download_button(
-                "📷 Instagram投稿をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/markdown",
-                key=f"download_instagram_{file_path.name}",
-            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.download_button(
+                    "📷 Instagram投稿をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/markdown",
+                    key=f"download_instagram_{file_path.name}",
+                )
+
+            with col2:
+                if st.button("🗑 Instagram投稿を削除", key=f"delete_instagram_{file_path.name}"):
+                    delete_stock_file(file_path)
+                    st.success("Instagram投稿を削除しました")
+                    st.rerun()
 
     with st.expander("🧵 Threads投稿ストック"):
         if not threads_files:
@@ -557,13 +587,23 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            st.download_button(
-                "🧵 Threads投稿をダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/plain",
-                key=f"download_threads_{file_path.name}",
-            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.download_button(
+                    "🧵 Threads投稿をダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/plain",
+                    key=f"download_threads_{file_path.name}",
+                )
+
+            with col2:
+                if st.button("🗑 Threads投稿を削除", key=f"delete_threads_{file_path.name}"):
+                    delete_stock_file(file_path)
+                    st.success("Threads投稿を削除しました")
+                    st.rerun()
     with st.expander("💡 アイデアストック"):
         if not idea_files:
             st.caption("まだアイデアはありません")
@@ -571,13 +611,23 @@ def show_post_stock() -> None:
             content = file_path.read_text(encoding="utf-8")
             st.subheader(file_path.name)
             st.write(content)
-            st.download_button(
-                "💡 アイデアをダウンロード",
-                data=content,
-                file_name=file_path.name,
-                mime="text/plain",
-                key=f"download_idea_{file_path.name}",
-            )
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.download_button(
+                    "💡 アイデアをダウンロード",
+                    data=content,
+                    file_name=file_path.name,
+                    mime="text/plain",
+                    key=f"download_idea_{file_path.name}",
+                )
+
+            with col2:
+                if st.button("🗑 アイデアを削除", key=f"delete_idea_{file_path.name}"):
+                    delete_stock_file(file_path)
+                    st.success("アイデアを削除しました")
+                    st.rerun()
     with st.expander("✨ 改善済み投稿ストック"):
         if not reviewed_files:
             st.caption("まだ改善済み投稿はありません")
@@ -1097,6 +1147,11 @@ def delete_template_post(file_path: Path) -> None:
 
 def delete_archive_file(file_path: Path) -> None:
     """archiveファイルを削除する。"""
+    if file_path.exists() and file_path.is_file():
+        file_path.unlink()
+
+def delete_stock_file(file_path: Path) -> None:
+    """投稿ストックファイルを削除する。"""
     if file_path.exists() and file_path.is_file():
         file_path.unlink()
 
