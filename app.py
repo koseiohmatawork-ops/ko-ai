@@ -185,7 +185,7 @@ def handle_memory_input(text: str) -> str | None:
 def show_post_stock() -> None:
     st.header("📦 投稿ストック")
 
-    with st.expander("使い方", expanded=True):
+    with st.expander("使い方", expanded=False):
         st.write(
             "投稿予定を確認したい場合は『投稿予定』、投稿素材を探したい場合は『基本投稿』、"
             "分析や収益化に使う素材を見たい場合は『収益化・分析』を選んでください。"
@@ -450,7 +450,16 @@ def show_post_stock() -> None:
             f"投稿済み: {len(posted_scheduled_files)}件"
         )
 
-        with st.expander("📌 今日投稿する予定"):
+        today_tab, tomorrow_tab, pending_tab, posted_tab = st.tabs(
+            [
+                f"📌 今日 {len(today_scheduled_files)}",
+                f"🌙 明日 {len(tomorrow_scheduled_files)}",
+                f"⏸ 保留 {len(pending_scheduled_files)}",
+                f"✅ 投稿済み {len(posted_scheduled_files)}",
+            ]
+        )
+
+        with today_tab:
             if not today_scheduled_files:
                 st.caption("今日投稿の予定はありません")
             for file_path in today_scheduled_files[:10]:
@@ -480,7 +489,7 @@ def show_post_stock() -> None:
                         st.success("投稿予定から削除しました")
                         st.rerun()
 
-        with st.expander("🌙 明日投稿する予定"):
+        with tomorrow_tab:
             if not tomorrow_scheduled_files:
                 st.caption("明日投稿の予定はありません")
             for file_path in tomorrow_scheduled_files[:10]:
@@ -510,7 +519,7 @@ def show_post_stock() -> None:
                         st.success("投稿予定から削除しました")
                         st.rerun()
 
-        with st.expander("⏸ 保留中の投稿"):
+        with pending_tab:
             if not pending_scheduled_files:
                 st.caption("保留中の投稿はありません")
             for file_path in pending_scheduled_files[:10]:
@@ -540,7 +549,7 @@ def show_post_stock() -> None:
                         st.success("投稿予定から削除しました")
                         st.rerun()
 
-        with st.expander("✅ 投稿済み"):
+        with posted_tab:
             if not posted_scheduled_files:
                 st.caption("投稿済みの投稿はありません")
             for file_path in posted_scheduled_files[:10]:
