@@ -78,6 +78,7 @@ def load_recent_stock(max_chars: int = 6000) -> str:
     stock_sources = [
         ("posts/safety_checked", "安全チェック済み投稿"),
         ("posts/stock_analysis_posts", "分析実投稿"),
+        ("posts/result_next_posts", "投稿反応から作った次の投稿案"),
         ("posts/today_menu_posts", "今日メニュー実投稿"),
         ("posts/template_posts", "テンプレ投稿"),
         ("posts/sales_funnels", "販売導線まとめ"),
