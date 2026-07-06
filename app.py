@@ -858,6 +858,55 @@ def create_post_result_ranking() -> str:
 
     return "\n".join(result)
 
+
+def create_post_result_insight(client: OpenAI) -> str:
+    """投稿反応メモから伸びた投稿パターンと次の改善案を作成する。"""
+    result_files = sorted(Path("posts/results").glob("*.md"), reverse=True)
+
+    if not result_files:
+        return "まだ投稿反応メモがありません。"
+
+    result_texts = []
+    for file_path in result_files[:20]:
+        content = file_path.read_text(encoding="utf-8")
+        result_texts.append(f"## {file_path.name}\n{content}")
+
+    results_text = "\n\n---\n\n".join(result_texts)
+
+    prompt = f"""
+あなたはSNS運用の分析担当です。
+以下の投稿反応メモをもとに、伸びた投稿パターンと次に改善すべき内容を分析してください。
+
+見るポイント:
+- 反応率が高い投稿の共通点
+- 保存率が高い投稿の共通点
+- プロフィールクリックやリンククリックにつながった投稿の共通点
+- 反応が弱い投稿の原因
+- 次に作るべき投稿テーマ
+- 次に試すべきCTA
+
+出力形式:
+1. 全体まとめ
+2. 伸びた投稿パターン
+3. 弱かった投稿パターン
+4. 次に作るべき投稿TOP3
+5. 次に試すCTA
+6. 明日やること
+
+投稿反応メモ:
+{results_text}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": "あなたはSNS投稿分析と改善提案の専門家です。"},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    return response.choices[0].message.content or ""
+
+
 def create_template_post(client: OpenAI, theme: str, platform: str, template_type: str) -> str:
     """決まった型に沿って投稿を作成する。"""
     prompt = f"""
@@ -1957,6 +2006,17 @@ with st.sidebar:
             {
                 "role": "assistant",
                 "content": ranking_text,
+            }
+        )
+        st.rerun()
+
+    if st.button("投稿反応から改善案を作成", key="create_post_result_insight_button"):
+        with st.spinner("投稿反応メモから改善案を作成中..."):
+            insight_text = create_post_result_insight(client)
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": f"📊 投稿反応から作成した改善案\n\n{insight_text}",
             }
         )
         st.rerun()
