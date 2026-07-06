@@ -144,6 +144,12 @@ if "stock_analysis_post_source" not in st.session_state:
 if "safety_check_source" not in st.session_state:
     st.session_state.safety_check_source = ""
 
+if "final_post_title" not in st.session_state:
+    st.session_state.final_post_title = ""
+
+if "final_post_body" not in st.session_state:
+    st.session_state.final_post_body = ""
+
 if "exclude_keywords_text" not in st.session_state:
     st.session_state.exclude_keywords_text = ""
 
@@ -1232,6 +1238,20 @@ def save_safety_checked_post(post_text: str) -> Path:
     return file_path
 
 
+def save_final_post(title: str, platform: str, post_text: str) -> Path:
+    """完成版投稿を投稿先ごとに保存する。"""
+    save_dir = Path("posts/final_posts") / platform.lower()
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = title.strip().replace("/", "_").replace(" ", "_")[:30] or "final_post"
+    file_path = save_dir / f"{timestamp}_{safe_title}.md"
+    file_path.write_text(post_text, encoding="utf-8")
+    return file_path
+
+
 with st.sidebar:
     st.header("📊 現在の状態")
 
@@ -1435,6 +1455,44 @@ with st.sidebar:
                 }
             )
             st.success("投稿を安全チェック・保存しました")
+            st.rerun()
+
+        st.divider()
+    st.header("✅ 完成版投稿を保存")
+    final_post_title = st.text_input(
+        "完成版投稿名",
+        placeholder="例: 投稿ネタ3つの解決法",
+        key="final_post_title",
+    )
+    final_post_platform = st.selectbox(
+        "完成版投稿先",
+        ["X", "Instagram", "Threads", "note", "その他"],
+        key="final_post_platform",
+    )
+    final_post_body = st.text_area(
+        "完成版投稿本文",
+        height=180,
+        placeholder="安全チェック後の完成版投稿を貼る",
+        key="final_post_body",
+    )
+    if st.button("完成版投稿を保存", key="save_final_post_button"):
+        if not final_post_title.strip():
+            st.warning("完成版投稿名を入力してください。")
+        elif not final_post_body.strip():
+            st.warning("完成版投稿本文を入力してください。")
+        else:
+            saved_path = save_final_post(
+                final_post_title.strip(),
+                final_post_platform,
+                final_post_body.strip(),
+            )
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"✅ 完成版投稿を保存しました\n\n保存先: {saved_path}",
+                }
+            )
+            st.success("完成版投稿を保存しました")
             st.rerun()
 
     st.divider()
