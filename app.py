@@ -960,6 +960,17 @@ def create_next_posts_from_result(client: OpenAI) -> str:
     )
     return response.choices[0].message.content or ""
 
+def save_next_posts_from_result(post_text: str) -> Path:
+    """投稿反応から作った次の投稿案を保存する。"""
+    save_dir = Path("posts/result_next_posts")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = save_dir / f"{timestamp}_result_next_posts.md"
+    file_path.write_text(post_text, encoding="utf-8")
+    return file_path
 
 def create_template_post(client: OpenAI, theme: str, platform: str, template_type: str) -> str:
     """決まった型に沿って投稿を作成する。"""
@@ -2078,12 +2089,14 @@ with st.sidebar:
     if st.button("投稿反応から次の投稿を作成", key="create_next_posts_from_result_button"):
         with st.spinner("投稿反応メモから次の投稿案を作成中..."):
             next_posts_text = create_next_posts_from_result(client)
+            saved_path = save_next_posts_from_result(next_posts_text)
         st.session_state.messages.append(
             {
                 "role": "assistant",
-                "content": f"📝 投稿反応から作成した次の投稿案\n\n{next_posts_text}",
+                "content": f"📝 投稿反応から作成した次の投稿案\n\n{next_posts_text}\n\n保存先: {saved_path}",
             }
         )
+        st.success("投稿反応から次の投稿案を作成・保存しました")
         st.rerun()
 
     st.divider()
