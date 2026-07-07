@@ -831,9 +831,8 @@ def simple_render_execution_result() -> None:
             st.rerun()
 
 
-# 新規追加: simple_render_next_action_hint
 def simple_render_next_action_hint() -> None:
-    """中央エリアに、今次に押すべき行動を表示する。"""
+    """中央エリアに、今次に押すべき行動とボタンを表示する。"""
     today_count = 0
     posted_count = 0
 
@@ -849,18 +848,46 @@ def simple_render_next_action_hint() -> None:
     result_next_count = len(list(Path("posts/result_next_posts").glob("*.md")))
     final_post_count = len(list(Path("posts/final_posts").glob("**/*.md")))
 
-    if today_count > 0:
-        st.info("次にやること：今日やる投稿を開いて、投稿本文をコピーしてください。投稿後は『投稿済みにして反応メモ下書きも作る』を押します。")
-    elif reaction_memo_count > 0:
-        st.info("次にやること：左の『🚀 今日投稿まで作る』を押すと、反応メモから今日投稿まで作れます。")
-    elif result_next_count > 0:
-        st.info("次にやること：左の『🚀 今日投稿まで作る』を押すと、次投稿案から今日投稿まで作れます。")
-    elif final_post_count > 0:
-        st.info("次にやること：左の『🚀 今日投稿まで作る』を押すと、完成版投稿を今日投稿に追加できます。")
-    elif posted_count > 0:
-        st.info("次にやること：投稿済みの投稿から反応メモ下書きを作ってください。")
-    else:
-        st.info("次にやること：まだ素材が少ないです。管理画面の『テスト投稿を作る』で一周テストできます。")
+    with st.container(border=True):
+        st.markdown("### 次にやること")
+
+        if today_count > 2:
+            st.warning("今日投稿が増えすぎています。まず整理した方がいいです。")
+            if st.button("🧹 今日投稿を整理する", key="simple_center_cleanup_today_posts", use_container_width=True):
+                deleted_count, deleted_paths = simple_cleanup_today_posts_keep_latest_by_platform()
+                st.session_state.go_to_today_posts = True
+                simple_set_execution_result(
+                    f"今日投稿を整理しました。{deleted_count}件削除しました。",
+                    deleted_paths,
+                )
+                st.rerun()
+            return
+
+        if today_count > 0:
+            st.info("今日やる投稿を開いて、投稿本文をコピーしてください。投稿後は『投稿済みにして反応メモ下書きも作る』を押します。")
+            if st.button("📌 今日やる投稿を開く", key="simple_center_open_today_posts", use_container_width=True):
+                st.session_state.simple_mode = "今日やる投稿"
+                st.rerun()
+        elif reaction_memo_count > 0 or result_next_count > 0 or final_post_count > 0:
+            st.info("今ある素材から今日投稿まで作れます。")
+            if st.button("🚀 今日投稿まで作る", key="simple_center_one_click_workflow", use_container_width=True):
+                message, created_paths = simple_run_one_click_workflow()
+                st.session_state.go_to_today_posts = True
+                simple_set_execution_result(message, created_paths)
+                st.rerun()
+        elif posted_count > 0:
+            st.info("投稿済みの投稿から反応メモ下書きを作ってください。")
+            if st.button("📦 投稿済みを開く", key="simple_center_open_posted_posts", use_container_width=True):
+                st.session_state.simple_mode = "今日やる投稿"
+                st.session_state.simple_today_status = f"投稿済み {posted_count}件"
+                st.rerun()
+        else:
+            st.info("まだ素材が少ないです。まず一周テスト用の投稿を作れます。")
+            if st.button("🧪 テスト投稿を作る", key="simple_center_create_test_today_post", use_container_width=True):
+                saved_path = simple_create_test_today_post()
+                st.session_state.go_to_today_posts = True
+                simple_set_execution_result("テスト投稿を作成しました。", [saved_path])
+                st.rerun()
 
 
 def simple_render_today_posts() -> None:
