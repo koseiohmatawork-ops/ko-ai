@@ -208,6 +208,32 @@ def simple_render_admin() -> None:
     st.subheader("⚙️ 管理")
     st.caption("テストデータを消したい時だけ使います。")
 
+    stock_counts = {
+        "投稿予定": len(list(Path("posts/schedule").glob("*.md"))),
+        "完成版投稿": len(list(Path("posts/final_posts").glob("**/*.md"))),
+        "反応メモ": len(list(Path("posts/results").glob("*.md"))),
+        "反応ベース次投稿": len(list(Path("posts/result_next_posts").glob("*.md"))),
+        "X投稿": len(list(Path("posts/x").glob("*.txt"))),
+        "Instagram投稿": len(list(Path("posts/instagram").glob("*.md"))),
+        "note記事": len(list(Path("posts/note").glob("*.md"))),
+        "アイデア": len(list(Path("posts/ideas").glob("*.txt"))),
+    }
+    total_count = sum(stock_counts.values())
+
+    st.markdown("**現在のストック件数**")
+    count_col1, count_col2 = st.columns(2)
+    stock_items = list(stock_counts.items())
+
+    with count_col1:
+        for label, count in stock_items[:4]:
+            st.write(f"{label}: {count}件")
+
+    with count_col2:
+        for label, count in stock_items[4:]:
+            st.write(f"{label}: {count}件")
+
+    st.caption(f"合計: {total_count}件")
+
     with st.expander("🧹 全ストック削除", expanded=False):
         st.warning("posts配下の投稿ストックファイル（.md / .txt）を全部削除します。")
         confirm_clear = st.checkbox(
