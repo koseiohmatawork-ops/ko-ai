@@ -463,6 +463,13 @@ def simple_create_post_result_draft_from_schedule(file_path: Path) -> Path:
     results_dir = Path("posts/results")
     results_dir.mkdir(parents=True, exist_ok=True)
 
+    # 同じ投稿に対する反応メモがすでにある場合は、新規作成せず既存ファイルを使う。
+    for existing_result_path in sorted(results_dir.glob("*.md"), reverse=True):
+        existing_content = existing_result_path.read_text(encoding="utf-8")
+        existing_source = simple_extract_field(existing_content, "元投稿")
+        if existing_source == str(file_path):
+            return existing_result_path
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_title = title.strip().replace("/", "_").replace(" ", "_")[:40] or "post_result"
     save_path = results_dir / f"{timestamp}_{platform}_{safe_title}.md"
