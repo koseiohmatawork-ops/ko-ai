@@ -850,10 +850,14 @@ def simple_render_next_action_hint() -> None:
             return
 
         if today_count > 0:
-            st.info("今日やる投稿を開いて、投稿本文をコピーしてください。投稿後は『投稿済みにして反応メモ下書きも作る』を押します。")
-            if st.button("📌 今日やる投稿を開く", key="simple_center_open_today_posts", use_container_width=True):
-                st.session_state.go_to_today_posts = True
-                st.rerun()
+            current_mode = st.session_state.get("simple_mode", "今日やる投稿")
+            if current_mode == "今日やる投稿":
+                st.info("下の投稿本文をコピーして投稿してください。投稿後は『投稿済みにして反応メモ下書きも作る』を押します。")
+            else:
+                st.info("今日やる投稿を開いて、投稿本文をコピーしてください。投稿後は『投稿済みにして反応メモ下書きも作る』を押します。")
+                if st.button("📌 今日やる投稿を開く", key="simple_center_open_today_posts", use_container_width=True):
+                    st.session_state.go_to_today_posts = True
+                    st.rerun()
         elif reaction_memo_count > 0 or result_next_count > 0 or final_post_count > 0:
             st.info("今ある素材から今日投稿まで作れます。")
             if st.button("🚀 今日投稿まで作る", key="simple_center_one_click_workflow", use_container_width=True):
