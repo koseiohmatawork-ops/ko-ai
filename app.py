@@ -986,9 +986,20 @@ def simple_render_today_posts() -> None:
     selected_file = today_file_options[selected_file_label]
     selected_content = selected_file.read_text(encoding="utf-8")
     selected_body = simple_extract_post_body(selected_content)
+    selected_platform = simple_extract_field(selected_content, "投稿先") or "投稿"
+    selected_title = simple_extract_field(selected_content, "投稿名") or selected_file.stem
+
+    st.markdown("**選択中の投稿**")
+    info_col1, info_col2 = st.columns(2)
+    with info_col1:
+        st.caption(f"投稿先: {selected_platform}")
+        st.caption(f"投稿名: {selected_title}")
+    with info_col2:
+        st.caption(f"ファイル: {selected_file.name}")
+        st.caption(f"状態: {selected_status}")
 
     st.text_area(
-        "投稿本文だけコピー用",
+        f"{selected_platform} 投稿本文だけコピー用",
         selected_body,
         height=320,
         key=f"simple_today_body_{selected_file.name}",
