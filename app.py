@@ -212,6 +212,68 @@ def simple_delete_files(file_paths: list[Path]) -> int:
             deleted_count += 1
     return deleted_count
 
+def simple_run_post_flow_self_check() -> list[tuple[str, bool, str]]:
+    """シンプル画面の投稿作成フローが壊れていないか確認する。"""
+    result_dir = Path("posts/result_next_posts")
+    result_dir.mkdir(parents=True, exist_ok=True)
+
+    test_source_path = result_dir / "__simple_self_check_result_next_post.md"
+    test_source_path.write_text(
+        """
+# 反応ベース次投稿案
+
+## 元の反応メモファイル
+posts/results/__simple_self_check.md
+
+## 次投稿案
+
+X投稿案
+これはX用の自動チェック投稿です。
+
+Instagram投稿案
+これはInstagram用の自動チェック投稿です。
+
+投稿前の注意点
+これは完成版には混ざってほしくない注意点です。
+""".strip(),
+        encoding="utf-8",
+    )
+
+    created_paths: list[Path] = []
+    results: list[tuple[str, bool, str]] = []
+
+    try:
+        x_final_path = simple_save_final_post_from_result_next_post(test_source_path, "X")
+        instagram_final_path = simple_save_final_post_from_result_next_post(test_source_path, "Instagram")
+        created_paths.extend([x_final_path, instagram_final_path])
+
+        x_schedule_path = simple_save_scheduled_post_from_final_post(x_final_path, "今日投稿")
+        instagram_schedule_path = simple_save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
+        created_paths.extend([x_schedule_path, instagram_schedule_path])
+
+        x_final_content = x_final_path.read_text(encoding="utf-8")
+        instagram_final_content = instagram_final_path.read_text(encoding="utf-8")
+        x_schedule_content = x_schedule_path.read_text(encoding="utf-8")
+        instagram_schedule_content = instagram_schedule_path.read_text(encoding="utf-8")
+
+        results.append(("X完成版ファイル作成", x_final_path.exists(), str(x_final_path)))
+        results.append(("Instagram完成版ファイル作成", instagram_final_path.exists(), str(instagram_final_path)))
+        results.append(("X本文切り出し", "これはX用の自動チェック投稿です。" in x_final_content, "X本文が入っているか"))
+        results.append(("Instagram本文切り出し", "これはInstagram用の自動チェック投稿です。" in instagram_final_content, "Instagram本文が入っているか"))
+        results.append(("XにInstagram本文が混ざっていない", "これはInstagram用の自動チェック投稿です。" not in x_final_content, "X本文にInstagramが混ざっていないか"))
+        results.append(("InstagramにX本文が混ざっていない", "これはX用の自動チェック投稿です。" not in instagram_final_content, "Instagram本文にXが混ざっていないか"))
+        results.append(("注意点が完成版に混ざっていない", "投稿前の注意点" not in x_final_content and "投稿前の注意点" not in instagram_final_content, "注意点が混ざっていないか"))
+        results.append(("X今日投稿ファイル作成", x_schedule_path.exists() and "## 状態\n今日投稿" in x_schedule_content, str(x_schedule_path)))
+        results.append(("Instagram今日投稿ファイル作成", instagram_schedule_path.exists() and "## 状態\n今日投稿" in instagram_schedule_content, str(instagram_schedule_path)))
+    finally:
+        if test_source_path.exists():
+            test_source_path.unlink()
+        for created_path in created_paths:
+            if created_path.exists():
+                created_path.unlink()
+
+    return results
+
 def simple_render_admin() -> None:
     """シンプル管理画面。普段使う最低限の管理だけ置く。"""
     st.subheader("⚙️ 管理")
@@ -242,6 +304,23 @@ def simple_render_admin() -> None:
             st.write(f"{label}: {count}件")
 
     st.caption(f"合計: {total_count}件")
+
+    with st.expander("🧪 投稿作成フローを確認", expanded=False):
+        st.caption("反応ベース次投稿 → 完成版 → 今日投稿 の流れが壊れていないか確認します。")
+        if st.button("🧪 動作チェックする", key="simple_post_flow_self_check"):
+            check_results = simple_run_post_flow_self_check()
+            failed_results = [result for result in check_results if not result[1]]
+
+            for label, is_success, detail in check_results:
+                if is_success:
+                    st.success(f"✅ {label}: OK")
+                else:
+                    st.error(f"❌ {label}: NG（{detail}）")
+
+            if failed_results:
+                st.error("投稿作成フローに問題があります。NG項目を確認してください。")
+            else:
+                st.success("投稿作成フローは正常です。")
 
     stock_file_groups = {
         "投稿予定": list(Path("posts/schedule").glob("*.md")),
