@@ -58,9 +58,6 @@ client = OpenAI()
 
 st.set_page_config(page_title="Ko AI", page_icon="🤖")
 
-st.markdown("### 🤖 Ko AI")
-st.caption("自分専用AIアシスタント")
-
 def simple_extract_field(content: str, field_name: str) -> str:
     marker = f"## {field_name}"
     if marker not in content:
@@ -1155,6 +1152,9 @@ if st.session_state.get("go_to_reaction_memos"):
     st.session_state.simple_mode = "投稿ストックを見る"
 
 with st.sidebar:
+    st.markdown("## 🤖 Ko AI")
+    st.caption("自分専用AIアシスタント")
+    st.divider()
     st.markdown("## 操作")
     simple_render_one_click_button()
     st.divider()
