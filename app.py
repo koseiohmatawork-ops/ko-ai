@@ -717,6 +717,31 @@ def simple_run_one_click_workflow() -> tuple[str, list[Path]]:
     return "進められる素材がまだありません。まず投稿か反応メモを作ってください。", []
 
 
+def simple_sidebar_status_counts() -> None:
+    """左サイドバーに現在の投稿状態を表示する。"""
+    today_count = 0
+    posted_count = 0
+
+    for file_path in Path("posts/schedule").glob("*.md"):
+        content = file_path.read_text(encoding="utf-8")
+        status = simple_extract_field(content, "状態")
+        if status == "今日投稿":
+            today_count += 1
+        elif status == "投稿済み":
+            posted_count += 1
+
+    reaction_memo_count = len(list(Path("posts/results").glob("*.md")))
+    result_next_count = len(list(Path("posts/result_next_posts").glob("*.md")))
+    final_post_count = len(list(Path("posts/final_posts").glob("**/*.md")))
+
+    st.markdown("### 現在の状態")
+    st.caption(f"今日投稿: {today_count}件")
+    st.caption(f"投稿済み: {posted_count}件")
+    st.caption(f"反応メモ: {reaction_memo_count}件")
+    st.caption(f"次投稿案: {result_next_count}件")
+    st.caption(f"完成版: {final_post_count}件")
+
+
 def simple_render_one_click_button() -> None:
     """左サイドバーに置くワンクリック実行ボタン。"""
     st.markdown("### 🚀 ワンクリック実行")
@@ -1013,6 +1038,8 @@ if st.session_state.get("go_to_reaction_memos"):
 with st.sidebar:
     st.markdown("## 操作")
     simple_render_one_click_button()
+    st.divider()
+    simple_sidebar_status_counts()
     st.divider()
     simple_mode = st.radio(
         "使う画面",
