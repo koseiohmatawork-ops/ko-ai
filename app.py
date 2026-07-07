@@ -665,6 +665,72 @@ def simple_save_scheduled_post_from_final_post(file_path: Path, status: str = "�
     return save_path
 
 
+def simple_run_one_click_workflow() -> tuple[str, list[Path]]:
+    """今ある素材から、次に進められるところまで自動で進める。"""
+    created_paths: list[Path] = []
+
+    reaction_memo_files = sorted(Path("posts/results").glob("*.md"), reverse=True)
+    result_next_files = sorted(Path("posts/result_next_posts").glob("*.md"), reverse=True)
+    final_post_files = sorted(Path("posts/final_posts").glob("**/*.md"), reverse=True)
+    today_post_files = []
+
+    for file_path in sorted(Path("posts/schedule").glob("*.md"), reverse=True):
+        content = file_path.read_text(encoding="utf-8")
+        if simple_extract_field(content, "状態") == "今日投稿":
+            today_post_files.append(file_path)
+
+    if reaction_memo_files:
+        source_path = reaction_memo_files[0]
+        next_post_path = simple_create_result_next_post_from_result_memo(source_path)
+        x_final_path = simple_save_final_post_from_result_next_post(next_post_path, "X")
+        instagram_final_path = simple_save_final_post_from_result_next_post(next_post_path, "Instagram")
+        x_schedule_path = simple_save_scheduled_post_from_final_post(x_final_path, "今日投稿")
+        instagram_schedule_path = simple_save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
+        created_paths.extend([next_post_path, x_final_path, instagram_final_path, x_schedule_path, instagram_schedule_path])
+        return "反応メモから、次投稿案・完成版・今日投稿まで一括作成しました。", created_paths
+
+    if result_next_files:
+        source_path = result_next_files[0]
+        x_final_path = simple_save_final_post_from_result_next_post(source_path, "X")
+        instagram_final_path = simple_save_final_post_from_result_next_post(source_path, "Instagram")
+        x_schedule_path = simple_save_scheduled_post_from_final_post(x_final_path, "今日投稿")
+        instagram_schedule_path = simple_save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
+        created_paths.extend([x_final_path, instagram_final_path, x_schedule_path, instagram_schedule_path])
+        return "反応ベース次投稿から、完成版・今日投稿まで一括作成しました。", created_paths
+
+    if final_post_files:
+        latest_by_platform: dict[str, Path] = {}
+        for file_path in final_post_files:
+            content = file_path.read_text(encoding="utf-8")
+            platform = simple_extract_field(content, "投稿先") or "投稿"
+            if platform not in latest_by_platform:
+                latest_by_platform[platform] = file_path
+
+        for file_path in latest_by_platform.values():
+            created_paths.append(simple_save_scheduled_post_from_final_post(file_path, "今日投稿"))
+
+        return "完成版投稿から、今日投稿に追加しました。", created_paths
+
+    if today_post_files:
+        return "すでに今日投稿があります。今日やる投稿画面で本文を確認してください。", today_post_files
+
+    return "進められる素材がまだありません。まず投稿か反応メモを作ってください。", []
+
+
+def simple_render_one_click_button() -> None:
+    """画面上部に置くワンクリック実行ボタン。"""
+    st.markdown("### 🚀 ワンクリック実行")
+    st.caption("今ある素材から、作れるところまで自動で進めます。")
+
+    if st.button("🚀 今ある素材から今日投稿まで作る", key="simple_one_click_workflow"):
+        message, created_paths = simple_run_one_click_workflow()
+        st.session_state.go_to_today_posts = True
+        st.success(message)
+        for created_path in created_paths[:8]:
+            st.caption(str(created_path))
+        st.rerun()
+
+
 def simple_render_today_posts() -> None:
     scheduled_files = sorted(Path("posts/schedule").glob("*.md"), reverse=True)
 
@@ -920,6 +986,8 @@ def simple_render_stock_viewer() -> None:
             st.rerun()
 
 
+st.divider()
+simple_render_one_click_button()
 st.divider()
 if st.session_state.get("go_to_today_posts"):
     st.session_state.simple_mode = "今日やる投稿"
