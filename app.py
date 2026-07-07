@@ -866,7 +866,7 @@ def simple_render_next_action_hint() -> None:
         if today_count > 0:
             st.info("今日やる投稿を開いて、投稿本文をコピーしてください。投稿後は『投稿済みにして反応メモ下書きも作る』を押します。")
             if st.button("📌 今日やる投稿を開く", key="simple_center_open_today_posts", use_container_width=True):
-                st.session_state.simple_mode = "今日やる投稿"
+                st.session_state.go_to_today_posts = True
                 st.rerun()
         elif reaction_memo_count > 0 or result_next_count > 0 or final_post_count > 0:
             st.info("今ある素材から今日投稿まで作れます。")
@@ -878,8 +878,8 @@ def simple_render_next_action_hint() -> None:
         elif posted_count > 0:
             st.info("投稿済みの投稿から反応メモ下書きを作ってください。")
             if st.button("📦 投稿済みを開く", key="simple_center_open_posted_posts", use_container_width=True):
-                st.session_state.simple_mode = "今日やる投稿"
-                st.session_state.simple_today_status = f"投稿済み {posted_count}件"
+                st.session_state.go_to_today_posts = True
+                st.session_state.open_posted_posts = True
                 st.rerun()
         else:
             st.info("まだ素材が少ないです。まず一周テスト用の投稿を作れます。")
@@ -916,14 +916,23 @@ def simple_render_today_posts() -> None:
         f"投稿済み: {len(groups['投稿済み'])}件"
     )
 
+    today_status_options = [
+        f"今日投稿 {len(groups['今日投稿'])}件",
+        f"明日投稿 {len(groups['明日投稿'])}件",
+        f"保留 {len(groups['保留'])}件",
+        f"投稿済み {len(groups['投稿済み'])}件",
+    ]
+
+    if st.session_state.get("simple_today_status") not in today_status_options:
+        st.session_state.simple_today_status = today_status_options[0]
+
+    if st.session_state.get("open_posted_posts"):
+        st.session_state.simple_today_status = today_status_options[3]
+        st.session_state.open_posted_posts = False
+
     selected_status_label = st.selectbox(
         "表示する投稿",
-        [
-            f"今日投稿 {len(groups['今日投稿'])}件",
-            f"明日投稿 {len(groups['明日投稿'])}件",
-            f"保留 {len(groups['保留'])}件",
-            f"投稿済み {len(groups['投稿済み'])}件",
-        ],
+        today_status_options,
         key="simple_today_status",
     )
     selected_status = selected_status_label.split()[0]
