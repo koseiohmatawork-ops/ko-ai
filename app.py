@@ -910,7 +910,7 @@ def show_post_stock() -> None:
                 st.subheader(file_path.name)
                 st.write(content)
 
-                col1, col2 = st.columns(2)
+                col1, col2, col3 = st.columns(3)
 
                 with col1:
                     st.download_button(
@@ -922,6 +922,12 @@ def show_post_stock() -> None:
                     )
 
                 with col2:
+                    if st.button("📝 次投稿案を作成", key=f"create_result_next_post_{file_path.name}"):
+                        saved_path = create_result_next_post_from_result_memo(file_path)
+                        st.success(f"次投稿案を作成しました: {saved_path}")
+                        st.rerun()
+
+                with col3:
                     if st.button("🗑 反応メモを削除", key=f"delete_post_result_{file_path.name}"):
                         delete_post_result_memo(file_path)
                         st.success("反応メモを削除しました")
@@ -1204,6 +1210,57 @@ def delete_post_result_memo(file_path: Path) -> None:
     """投稿反応メモファイルを削除する。"""
     if file_path.exists() and file_path.is_file():
         file_path.unlink()
+
+def create_result_next_post_from_result_memo(file_path: Path) -> Path:
+    """投稿反応メモから次投稿案を作成して保存する。"""
+    save_dir = Path("posts/result_next_posts")
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    from datetime import datetime
+
+    content = file_path.read_text(encoding="utf-8")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = file_path.stem.strip().replace("/", "_").replace(" ", "_")[:40] or "result_next_post"
+    save_path = save_dir / f"{timestamp}_{safe_title}.md"
+
+    prompt = f"""
+以下の投稿反応メモをもとに、次に投稿するSNS投稿案を作ってください。
+
+条件:
+- 日本語
+- 大学生でも自然に書ける文体
+- 過度な煽りや断定は避ける
+- 元投稿の良さを活かす
+- 改善点があれば次投稿に反映する
+- X投稿案とInstagram投稿案を両方出す
+- 最後に投稿前の注意点も書く
+
+投稿反応メモ:
+{content}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "あなたはSNS投稿改善に強い編集者です。"},
+            {"role": "user", "content": prompt},
+        ],
+    )
+
+    next_post = response.choices[0].message.content or ""
+
+    output = f"""
+# 反応ベース次投稿案
+
+## 元の反応メモファイル
+{file_path}
+
+## 次投稿案
+{next_post.strip()}
+""".strip()
+
+    save_path.write_text(output, encoding="utf-8")
+    return save_path
 
 def delete_result_next_post(file_path: Path) -> None:
     """反応ベース次投稿ファイルを削除する。"""
