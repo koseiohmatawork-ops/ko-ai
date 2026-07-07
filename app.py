@@ -364,7 +364,7 @@ def simple_render_admin() -> None:
         if st.button("🧪 今日投稿のテスト投稿を作成", key="simple_create_test_today_post"):
             saved_path = simple_create_test_today_post()
             st.session_state.go_to_today_posts = True
-            st.success(f"テスト投稿を作成しました: {saved_path}")
+            simple_set_execution_result("テスト投稿を作成しました。", [saved_path])
             st.rerun()
 
     stock_file_groups = {
@@ -396,7 +396,7 @@ def simple_render_admin() -> None:
             key="simple_delete_category_button",
         ):
             deleted_count = simple_delete_files(delete_targets)
-            st.success(f"{delete_category}を{deleted_count}件削除しました。")
+            simple_set_execution_result(f"{delete_category}を{deleted_count}件削除しました。")
             st.rerun()
 
     with st.expander("🧹 全ストック削除", expanded=False):
@@ -407,7 +407,7 @@ def simple_render_admin() -> None:
         )
         if st.button("🧹 全ストックを削除", disabled=not confirm_clear, key="simple_clear_all_stocks"):
             deleted_count = simple_clear_all_post_stocks()
-            st.success(f"{deleted_count}件のストックファイルを削除しました。")
+            simple_set_execution_result(f"{deleted_count}件のストックファイルを削除しました。")
             st.rerun()
 
 
@@ -750,9 +750,14 @@ def simple_render_one_click_button() -> None:
     if st.button("🚀 今日投稿まで作る", key="simple_one_click_workflow", use_container_width=True):
         message, created_paths = simple_run_one_click_workflow()
         st.session_state.go_to_today_posts = True
-        st.session_state.simple_execution_message = message
-        st.session_state.simple_execution_paths = [str(path) for path in created_paths[:8]]
+        simple_set_execution_result(message, created_paths)
         st.rerun()
+
+
+def simple_set_execution_result(message: str, paths: list[Path] | None = None) -> None:
+    """中央エリアに出す直近の実行結果を保存する。"""
+    st.session_state.simple_execution_message = message
+    st.session_state.simple_execution_paths = [str(path) for path in (paths or [])[:8]]
 
 
 def simple_render_execution_result() -> None:
@@ -841,15 +846,14 @@ def simple_render_today_posts() -> None:
                 saved_path = simple_create_post_result_draft_from_schedule(selected_file)
                 st.session_state.go_to_reaction_memos = True
                 st.session_state.open_reaction_memo_path = str(saved_path)
-                st.success("投稿済みに変更しました")
-                st.success(f"反応メモ下書きを作りました: {saved_path}")
+                simple_set_execution_result("投稿済みに変更し、反応メモ下書きを作りました。", [saved_path])
                 st.rerun()
         else:
             if st.button("📈 反応メモ下書きを作る", key=f"simple_create_result_draft_{selected_file.name}"):
                 saved_path = simple_create_post_result_draft_from_schedule(selected_file)
                 st.session_state.go_to_reaction_memos = True
                 st.session_state.open_reaction_memo_path = str(saved_path)
-                st.success(f"反応メモ下書きを作りました: {saved_path}")
+                simple_set_execution_result("反応メモ下書きを作りました。", [saved_path])
                 st.rerun()
     with col2:
         if st.button("🗑 削除", key=f"simple_delete_schedule_{selected_file.name}"):
@@ -990,9 +994,10 @@ def simple_render_stock_viewer() -> None:
             x_schedule_path = simple_save_scheduled_post_from_final_post(x_final_path, "今日投稿")
             instagram_schedule_path = simple_save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
             st.session_state.go_to_today_posts = True
-            st.success("今日投稿まで一括作成しました。今日やる投稿画面に戻ります。")
-            st.caption(f"X今日投稿: {x_schedule_path}")
-            st.caption(f"Instagram今日投稿: {instagram_schedule_path}")
+            simple_set_execution_result(
+                "今日投稿まで一括作成しました。",
+                [next_post_path, x_final_path, instagram_final_path, x_schedule_path, instagram_schedule_path],
+            )
             st.rerun()
 
     elif selected_group_type == "result_next":
@@ -1002,16 +1007,17 @@ def simple_render_stock_viewer() -> None:
             x_schedule_path = simple_save_scheduled_post_from_final_post(x_final_path, "今日投稿")
             instagram_schedule_path = simple_save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
             st.session_state.go_to_today_posts = True
-            st.success("X・Instagramを今日投稿に追加しました。今日やる投稿画面に戻ります。")
-            st.caption(f"X今日投稿: {x_schedule_path}")
-            st.caption(f"Instagram今日投稿: {instagram_schedule_path}")
+            simple_set_execution_result(
+                "X・Instagramを今日投稿に追加しました。",
+                [x_final_path, instagram_final_path, x_schedule_path, instagram_schedule_path],
+            )
             st.rerun()
 
     elif selected_group_type == "final_post":
         if st.button("📌 今日投稿に追加", key=f"simple_today_from_final_post_{selected_file}"):
             saved_path = simple_save_scheduled_post_from_final_post(selected_file, "今日投稿")
             st.session_state.go_to_today_posts = True
-            st.success(f"今日投稿に追加しました。今日やる投稿画面に戻ります: {saved_path}")
+            simple_set_execution_result("今日投稿に追加しました。", [saved_path])
             st.rerun()
 
     with st.expander("細かい操作", expanded=False):
