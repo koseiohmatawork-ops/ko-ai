@@ -1007,11 +1007,11 @@ def show_post_stock() -> None:
                 st.subheader(file_path.name)
                 st.write(content)
 
-                col1, col2, col3 = st.columns(3)
+                col1, col2, col3, col4 = st.columns(4)
 
                 with col1:
                     st.download_button(
-                        "📈 投稿反応メモをダウンロード",
+                        "📈 ダウンロード",
                         data=content,
                         file_name=file_path.name,
                         mime="text/markdown",
@@ -1025,7 +1025,17 @@ def show_post_stock() -> None:
                         st.rerun()
 
                 with col3:
-                    if st.button("🗑 反応メモを削除", key=f"delete_post_result_{file_path.name}"):
+                    if st.button("🚀 完成版まで一括作成", key=f"auto_finalize_from_result_{file_path.name}"):
+                        next_post_path = create_result_next_post_from_result_memo(file_path)
+                        x_final_path = save_final_post_from_result_next_post(next_post_path, "X")
+                        instagram_final_path = save_final_post_from_result_next_post(next_post_path, "Instagram")
+                        st.success(f"次投稿案を作成しました: {next_post_path}")
+                        st.success(f"X完成版を作成しました: {x_final_path}")
+                        st.success(f"Instagram完成版を作成しました: {instagram_final_path}")
+                        st.rerun()
+
+                with col4:
+                    if st.button("🗑 削除", key=f"delete_post_result_{file_path.name}"):
                         delete_post_result_memo(file_path)
                         st.success("反応メモを削除しました")
                         st.rerun()
