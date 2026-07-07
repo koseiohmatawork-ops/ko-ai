@@ -106,6 +106,77 @@ def simple_extract_post_body(content: str) -> str:
     return simple_clean_post_body(body)
 
 
+def simple_file_label(file_path: Path) -> str:
+    """画面用に長い保存ファイル名を短く表示する。"""
+    try:
+        content = file_path.read_text(encoding="utf-8")
+    except Exception:
+        content = ""
+
+    platform = simple_extract_field(content, "投稿先").strip()
+    lower_path = str(file_path).lower()
+
+    if platform.lower() == "x":
+        platform = "X"
+    elif platform.lower() == "instagram":
+        platform = "Instagram"
+    elif platform.lower() == "threads":
+        platform = "Threads"
+    elif platform.lower() == "note":
+        platform = "note"
+    elif not platform:
+        if "/instagram/" in lower_path or "instagram" in lower_path:
+            platform = "Instagram"
+        elif "/x/" in lower_path or "_x_" in lower_path:
+            platform = "X"
+        elif "threads" in lower_path:
+            platform = "Threads"
+        elif "note" in lower_path:
+            platform = "note"
+        else:
+            platform = "投稿"
+
+    body = simple_extract_post_body(content)
+    body_lines = [line.strip() for line in body.splitlines() if line.strip()]
+    body_first_line = body_lines[0] if body_lines else ""
+
+    title = simple_extract_field(content, "投稿名").strip()
+
+    # 投稿名が保存ファイル名っぽい場合は使わず、投稿本文の1行目を表示名にする。
+    title_looks_like_filename = (
+        len(title) > 28
+        or title.count("_") >= 2
+        or sum(char.isdigit() for char in title) >= 8
+    )
+
+    if not title or title_looks_like_filename:
+        title = body_first_line or file_path.stem
+
+    title = title.replace("#", "").replace("##", "").strip()
+    title = title[:24] + "..." if len(title) > 24 else title
+
+    return f"{platform} / {title}"
+
+
+def simple_file_options(file_paths: list[Path]) -> dict[str, Path]:
+    """selectbox用に、短くて重複しない表示名を作る。"""
+    options: dict[str, Path] = {}
+    counts: dict[str, int] = {}
+
+    for file_path in file_paths:
+        base_label = simple_file_label(file_path)
+        counts[base_label] = counts.get(base_label, 0) + 1
+
+        if counts[base_label] == 1:
+            label = base_label
+        else:
+            label = f"{base_label} ({counts[base_label]})"
+
+        options[label] = file_path
+
+    return options
+
+
 def simple_update_schedule_status(file_path: Path, new_status: str) -> None:
     content = file_path.read_text(encoding="utf-8")
     if "## 状態" in content:
@@ -166,12 +237,13 @@ def simple_render_today_posts() -> None:
         st.info(f"{selected_status}の投稿はありません")
         return
 
-    selected_file_name = st.selectbox(
+    today_file_options = simple_file_options(selected_files)
+    selected_file_label = st.selectbox(
         "投稿を選ぶ",
-        [file_path.name for file_path in selected_files],
+        list(today_file_options.keys()),
         key="simple_today_file",
     )
-    selected_file = next(file_path for file_path in selected_files if file_path.name == selected_file_name)
+    selected_file = today_file_options[selected_file_label]
     selected_content = selected_file.read_text(encoding="utf-8")
     selected_body = simple_extract_post_body(selected_content)
 
@@ -226,12 +298,13 @@ def simple_render_stock_viewer() -> None:
         st.info("このストックにはまだファイルがありません")
         return
 
-    selected_file_name = st.selectbox(
+    stock_file_options = simple_file_options(selected_files)
+    selected_file_label = st.selectbox(
         "ファイルを選ぶ",
-        [file_path.name for file_path in selected_files],
+        list(stock_file_options.keys()),
         key="simple_stock_file",
     )
-    selected_file = next(file_path for file_path in selected_files if file_path.name == selected_file_name)
+    selected_file = stock_file_options[selected_file_label]
     selected_content = selected_file.read_text(encoding="utf-8")
 
     st.text_area(
