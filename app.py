@@ -244,6 +244,194 @@ def simple_create_post_result_draft_from_schedule(file_path: Path) -> Path:
     return save_path
 
 
+def simple_extract_metric(content: str, metric_name: str) -> int:
+    """反応メモの数字欄から数値を取り出す。"""
+    marker = f"- {metric_name}:"
+    for line in content.splitlines():
+        if line.strip().startswith(marker):
+            value_text = line.split(marker, 1)[1].strip()
+            try:
+                return int(value_text)
+            except ValueError:
+                return 0
+    return 0
+
+
+def simple_replace_markdown_section(content: str, section_name: str, new_body: str) -> str:
+    """Markdownの指定セクションだけを置き換える。"""
+    marker = f"## {section_name}"
+    if marker not in content:
+        return content + f"\n\n{marker}\n{new_body.strip()}"
+
+    before, after = content.split(marker, 1)
+    if "\n## " in after:
+        current_section, rest = after.split("\n## ", 1)
+        return before + marker + "\n" + new_body.strip() + "\n\n## " + rest.strip()
+
+    return before + marker + "\n" + new_body.strip()
+
+
+def simple_save_result_memo_edits(
+    file_path: Path,
+    impressions: int,
+    likes: int,
+    comments: int,
+    saves: int,
+    profile_clicks: int,
+    link_clicks: int,
+    memo: str,
+) -> None:
+    """反応メモの数字とメモ欄を保存する。"""
+    content = file_path.read_text(encoding="utf-8")
+    numbers_body = f"""
+- インプレッション: {impressions}
+- いいね: {likes}
+- コメント: {comments}
+- 保存: {saves}
+- プロフィールクリック: {profile_clicks}
+- リンククリック: {link_clicks}
+""".strip()
+
+    content = simple_replace_markdown_section(content, "数字", numbers_body)
+    content = simple_replace_markdown_section(content, "反応メモ", memo.strip() or "あとで実際の反応を入力する")
+    file_path.write_text(content, encoding="utf-8")
+
+
+def simple_section_between(content: str, start_marker: str, end_markers: list[str]) -> str:
+    """指定した見出し以降から、次の見出しの手前までを取り出す。"""
+    if start_marker not in content:
+        return ""
+
+    section = content.split(start_marker, 1)[1].strip()
+    end_positions = [section.find(end_marker) for end_marker in end_markers if end_marker in section]
+
+    if end_positions:
+        section = section[: min(end_positions)].strip()
+
+    return simple_clean_post_body(section)
+
+
+def simple_create_result_next_post_from_result_memo(file_path: Path) -> Path:
+    """反応メモから次投稿案を作る。シンプル画面用。"""
+    content = file_path.read_text(encoding="utf-8")
+    result_dir = Path("posts/result_next_posts")
+    result_dir.mkdir(parents=True, exist_ok=True)
+
+    prompt = f"""
+以下は投稿後の反応メモです。
+この内容をもとに、次に投稿するための案を作ってください。
+
+条件:
+- 日本語
+- 大学生が自然に書く感じ
+- 煽りすぎない
+- X投稿案とInstagram投稿案を分ける
+- 投稿前の注意点も短く書く
+
+反応メモ:
+{content}
+""".strip()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "あなたはSNS投稿改善に強い編集者です。"},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    next_post = response.choices[0].message.content or ""
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = file_path.stem.strip().replace("/", "_").replace(" ", "_")[:40] or "result_next_post"
+    save_path = result_dir / f"{timestamp}_{safe_title}.md"
+
+    output = f"""
+# 反応ベース次投稿案
+
+## 元の反応メモファイル
+{file_path}
+
+## 次投稿案
+{next_post}
+""".strip()
+
+    save_path.write_text(output, encoding="utf-8")
+    return save_path
+
+
+def simple_save_final_post_from_result_next_post(file_path: Path, platform: str) -> Path:
+    """反応ベース次投稿案から、指定プラットフォームの完成版投稿を作る。"""
+    content = file_path.read_text(encoding="utf-8")
+    save_dir = Path("posts/final_posts") / platform.lower()
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    if platform.lower() == "x":
+        post_body = simple_section_between(content, "X投稿案", ["Instagram投稿案", "投稿前の注意点"])
+    elif platform.lower() == "instagram":
+        post_body = simple_section_between(content, "Instagram投稿案", ["投稿前の注意点"])
+    else:
+        post_body = simple_extract_post_body(content)
+
+    if not post_body.strip():
+        post_body = simple_extract_post_body(content)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = file_path.stem.strip().replace("/", "_").replace(" ", "_")[:40] or "final_post"
+    save_path = save_dir / f"{timestamp}_{platform.lower()}_{safe_title}.md"
+
+    output = f"""
+# 完成版投稿
+
+## 元ファイル
+{file_path}
+
+## 投稿先
+{platform}
+
+## 投稿本文
+{post_body.strip()}
+""".strip()
+
+    save_path.write_text(output, encoding="utf-8")
+    return save_path
+
+
+def simple_save_scheduled_post_from_final_post(file_path: Path, status: str = "今日投稿") -> Path:
+    """完成版投稿を投稿予定に追加する。"""
+    content = file_path.read_text(encoding="utf-8")
+    platform = simple_extract_field(content, "投稿先") or "X"
+    post_body = simple_extract_post_body(content)
+
+    schedule_dir = Path("posts/schedule")
+    schedule_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = file_path.stem.strip().replace("/", "_").replace(" ", "_")[:40] or "scheduled_post"
+    save_path = schedule_dir / f"{timestamp}_{platform}_{safe_title}.md"
+
+    output = f"""
+# 投稿予定
+
+## 投稿名
+{file_path.stem}
+
+## 投稿先
+{platform}
+
+## 状態
+{status}
+
+## 元ファイル
+{file_path}
+
+## 投稿本文
+{post_body}
+""".strip()
+
+    save_path.write_text(output, encoding="utf-8")
+    return save_path
+
+
 def simple_render_today_posts() -> None:
     scheduled_files = sorted(Path("posts/schedule").glob("*.md"), reverse=True)
 
@@ -371,12 +559,77 @@ def simple_render_stock_viewer() -> None:
     )
 
     if selected_group_type == "post_result":
+        with st.expander("反応メモを編集", expanded=False):
+            current_memo = simple_extract_field(selected_content, "反応メモ")
+            metric_col1, metric_col2 = st.columns(2)
+
+            with metric_col1:
+                edited_impressions = st.number_input(
+                    "インプレッション",
+                    min_value=0,
+                    value=simple_extract_metric(selected_content, "インプレッション"),
+                    key=f"edit_impressions_{selected_file.name}",
+                )
+                edited_likes = st.number_input(
+                    "いいね",
+                    min_value=0,
+                    value=simple_extract_metric(selected_content, "いいね"),
+                    key=f"edit_likes_{selected_file.name}",
+                )
+                edited_comments = st.number_input(
+                    "コメント",
+                    min_value=0,
+                    value=simple_extract_metric(selected_content, "コメント"),
+                    key=f"edit_comments_{selected_file.name}",
+                )
+
+            with metric_col2:
+                edited_saves = st.number_input(
+                    "保存",
+                    min_value=0,
+                    value=simple_extract_metric(selected_content, "保存"),
+                    key=f"edit_saves_{selected_file.name}",
+                )
+                edited_profile_clicks = st.number_input(
+                    "プロフィールクリック",
+                    min_value=0,
+                    value=simple_extract_metric(selected_content, "プロフィールクリック"),
+                    key=f"edit_profile_clicks_{selected_file.name}",
+                )
+                edited_link_clicks = st.number_input(
+                    "リンククリック",
+                    min_value=0,
+                    value=simple_extract_metric(selected_content, "リンククリック"),
+                    key=f"edit_link_clicks_{selected_file.name}",
+                )
+
+            edited_memo = st.text_area(
+                "反応メモ",
+                current_memo,
+                height=140,
+                key=f"edit_result_memo_{selected_file.name}",
+            )
+
+            if st.button("💾 反応メモを保存", key=f"save_result_memo_edits_{selected_file.name}"):
+                simple_save_result_memo_edits(
+                    selected_file,
+                    edited_impressions,
+                    edited_likes,
+                    edited_comments,
+                    edited_saves,
+                    edited_profile_clicks,
+                    edited_link_clicks,
+                    edited_memo,
+                )
+                st.success("反応メモを保存しました")
+                st.rerun()
+
         if st.button("📌 今日投稿まで一括作成", key=f"simple_auto_today_from_result_{selected_file.name}"):
-            next_post_path = create_result_next_post_from_result_memo(selected_file)
-            x_final_path = save_final_post_from_result_next_post(next_post_path, "X")
-            instagram_final_path = save_final_post_from_result_next_post(next_post_path, "Instagram")
-            x_schedule_path = save_scheduled_post_from_final_post(x_final_path, "今日投稿")
-            instagram_schedule_path = save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
+            next_post_path = simple_create_result_next_post_from_result_memo(selected_file)
+            x_final_path = simple_save_final_post_from_result_next_post(next_post_path, "X")
+            instagram_final_path = simple_save_final_post_from_result_next_post(next_post_path, "Instagram")
+            x_schedule_path = simple_save_scheduled_post_from_final_post(x_final_path, "今日投稿")
+            instagram_schedule_path = simple_save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
             st.success("今日投稿まで一括作成しました。")
             st.caption(f"X今日投稿: {x_schedule_path}")
             st.caption(f"Instagram今日投稿: {instagram_schedule_path}")
@@ -384,10 +637,10 @@ def simple_render_stock_viewer() -> None:
 
     elif selected_group_type == "result_next":
         if st.button("📌 X・Instagramを今日投稿に追加", key=f"simple_today_from_result_next_{selected_file.name}"):
-            x_final_path = save_final_post_from_result_next_post(selected_file, "X")
-            instagram_final_path = save_final_post_from_result_next_post(selected_file, "Instagram")
-            x_schedule_path = save_scheduled_post_from_final_post(x_final_path, "今日投稿")
-            instagram_schedule_path = save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
+            x_final_path = simple_save_final_post_from_result_next_post(selected_file, "X")
+            instagram_final_path = simple_save_final_post_from_result_next_post(selected_file, "Instagram")
+            x_schedule_path = simple_save_scheduled_post_from_final_post(x_final_path, "今日投稿")
+            instagram_schedule_path = simple_save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
             st.success("X・Instagramを今日投稿に追加しました。")
             st.caption(f"X今日投稿: {x_schedule_path}")
             st.caption(f"Instagram今日投稿: {instagram_schedule_path}")
@@ -395,7 +648,7 @@ def simple_render_stock_viewer() -> None:
 
     elif selected_group_type == "final_post":
         if st.button("📌 今日投稿に追加", key=f"simple_today_from_final_post_{selected_file}"):
-            saved_path = save_scheduled_post_from_final_post(selected_file, "今日投稿")
+            saved_path = simple_save_scheduled_post_from_final_post(selected_file, "今日投稿")
             st.success(f"今日投稿に追加しました: {saved_path}")
             st.rerun()
 
