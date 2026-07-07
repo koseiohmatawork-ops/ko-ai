@@ -184,9 +184,106 @@ def handle_memory_input(text: str) -> str | None:
 
     return None
 
+def run_result_next_post_finalize_self_check() -> list[tuple[str, bool, str]]:
+    """反応ベース次投稿からX/Instagram完成版が正しく作れるか自動確認する。"""
+    result_dir = Path("posts/result_next_posts")
+    result_dir.mkdir(parents=True, exist_ok=True)
+
+    test_source_path = result_dir / "__self_check_result_next_post.md"
+    test_source_path.write_text(
+        """
+# 反応ベース次投稿案
+
+## 元の反応メモファイル
+posts/results/__self_check.md
+
+## 次投稿案
+
+X投稿案
+これはX用の自動チェック投稿です。
+
+Instagram投稿案
+これはInstagram用の自動チェック投稿です。
+
+投稿前の注意点
+これは混ざってはいけない注意点です。
+""".strip(),
+        encoding="utf-8",
+    )
+
+    created_paths: list[Path] = []
+    results: list[tuple[str, bool, str]] = []
+
+    try:
+        x_path = save_final_post_from_result_next_post(test_source_path, "X")
+        instagram_path = save_final_post_from_result_next_post(test_source_path, "Instagram")
+        created_paths.extend([x_path, instagram_path])
+
+        x_content = x_path.read_text(encoding="utf-8")
+        instagram_content = instagram_path.read_text(encoding="utf-8")
+
+        results.append(("X完成版ファイル作成", x_path.exists(), str(x_path)))
+        results.append(("Instagram完成版ファイル作成", instagram_path.exists(), str(instagram_path)))
+        results.append(("X投稿本文だけ切り出し", "これはX用の自動チェック投稿です。" in x_content, "X本文が入っているか"))
+        results.append(("XにInstagram投稿案が混ざっていない", "Instagram投稿案" not in x_content, "Instagram見出しが混ざっていないか"))
+        results.append(("Instagram投稿本文だけ切り出し", "これはInstagram用の自動チェック投稿です。" in instagram_content, "Instagram本文が入っているか"))
+        results.append(("InstagramにX投稿案が混ざっていない", "X投稿案" not in instagram_content, "X見出しが混ざっていないか"))
+        results.append(("投稿前の注意点が混ざっていない", "投稿前の注意点" not in instagram_content and "投稿前の注意点" not in x_content, "注意点が混ざっていないか"))
+    finally:
+        if test_source_path.exists():
+            test_source_path.unlink()
+        for created_path in created_paths:
+            if created_path.exists():
+                created_path.unlink()
+
+    return results
+
+
+def clear_all_post_stock_files() -> int:
+    """posts配下の投稿ストック用ファイルをすべて削除する。"""
+    posts_dir = Path("posts")
+    if not posts_dir.exists():
+        return 0
+
+    deleted_count = 0
+    for file_path in posts_dir.rglob("*"):
+        if file_path.is_file() and file_path.suffix in [".md", ".txt"]:
+            file_path.unlink()
+            deleted_count += 1
+
+    return deleted_count
+
 
 def show_post_stock() -> None:
     st.header("📦 投稿ストック")
+
+    with st.expander("🧪 自動動作チェック", expanded=False):
+        st.caption("反応ベース次投稿から、X/Instagram完成版が正しく作れるか自動で確認します。")
+        if st.button("🧪 X・Instagram完成版の自動チェック", key="run_result_next_finalize_self_check"):
+            check_results = run_result_next_post_finalize_self_check()
+            failed_results = [result for result in check_results if not result[1]]
+
+            for label, is_success, detail in check_results:
+                if is_success:
+                    st.success(f"✅ {label}: OK")
+                else:
+                    st.error(f"❌ {label}: NG（{detail}）")
+
+            if not failed_results:
+                st.success("自動チェックはすべて成功しました。")
+            else:
+                st.error("自動チェックで失敗があります。表示されたNG項目を確認してください。")
+
+    with st.expander("🧹 ストック全削除", expanded=False):
+        st.warning("posts配下の投稿ストック用ファイル（.md / .txt）をすべて削除します。テストデータを消したいときだけ使ってください。")
+        confirm_clear_stock = st.checkbox(
+            "全ストックを削除することを確認しました",
+            key="confirm_clear_all_post_stocks",
+        )
+        if st.button("🧹 全ストックを削除", disabled=not confirm_clear_stock, key="clear_all_post_stocks"):
+            deleted_count = clear_all_post_stock_files()
+            st.success(f"{deleted_count}件のストックファイルを削除しました。")
+            st.rerun()
 
     with st.expander("使い方", expanded=False):
         st.write(
@@ -1274,6 +1371,24 @@ def create_result_next_post_from_result_memo(file_path: Path) -> Path:
     save_path.write_text(output, encoding="utf-8")
     return save_path
 
+def extract_section_between_markers(content: str, start_marker: str, end_markers: list[str]) -> str:
+    """指定した見出し以降から、次の見出しの手前までを取り出す。"""
+    if start_marker not in content:
+        return ""
+
+    section = content.split(start_marker, 1)[1].strip()
+
+    end_positions = [
+        section.find(end_marker)
+        for end_marker in end_markers
+        if end_marker in section
+    ]
+
+    if end_positions:
+        section = section[: min(end_positions)].strip()
+
+    return section.strip()
+
 def save_final_post_from_result_next_post(file_path: Path, platform: str = "X") -> Path:
     """反応ベース次投稿案を完成版投稿として保存する。"""
     save_dir = Path("posts/final_posts") / platform.lower()
@@ -1284,7 +1399,25 @@ def save_final_post_from_result_next_post(file_path: Path, platform: str = "X") 
     content = file_path.read_text(encoding="utf-8")
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_title = file_path.stem.strip().replace("/", "_").replace(" ", "_")[:40] or "final_post"
-    save_path = save_dir / f"{timestamp}_{safe_title}.md"
+    save_path = save_dir / f"{timestamp}_{platform.lower()}_{safe_title}.md"
+
+    if platform.lower() == "x":
+        post_body = extract_section_between_markers(
+            content,
+            "X投稿案",
+            ["Instagram投稿案", "投稿前の注意点"],
+        )
+    elif platform.lower() == "instagram":
+        post_body = extract_section_between_markers(
+            content,
+            "Instagram投稿案",
+            ["投稿前の注意点"],
+        )
+    else:
+        post_body = content
+
+    if not post_body.strip():
+        post_body = content
 
     output = f"""
 # 完成版投稿
@@ -1292,8 +1425,11 @@ def save_final_post_from_result_next_post(file_path: Path, platform: str = "X") 
 ## 元ファイル
 {file_path}
 
+## 投稿先
+{platform}
+
 ## 投稿本文
-{content}
+{post_body.strip()}
 """.strip()
 
     save_path.write_text(output, encoding="utf-8")
