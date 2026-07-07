@@ -212,6 +212,43 @@ def simple_delete_files(file_paths: list[Path]) -> int:
             deleted_count += 1
     return deleted_count
 
+def simple_create_test_today_post() -> Path:
+    """シンプル画面の動作確認用に、今日投稿を1件作る。"""
+    schedule_dir = Path("posts/schedule")
+    schedule_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    save_path = schedule_dir / f"{timestamp}_X_simple_test_post.md"
+
+    output = f"""
+# 投稿予定
+
+## 投稿名
+シンプル動作確認用テスト投稿
+
+## 投稿先
+X
+
+## 状態
+今日投稿
+
+## 元ファイル
+管理画面で作成
+
+## 投稿本文
+📘 テスト投稿です。
+
+Ko AIのシンプル画面で、今日投稿 → 投稿済み → 反応メモ作成 → 次投稿作成まで確認するための投稿です。
+
+この投稿は実際には投稿せず、動作確認が終わったら管理画面から削除してください。
+
+## 作成日時
+{timestamp}
+""".strip()
+
+    save_path.write_text(output, encoding="utf-8")
+    return save_path
+
 def simple_run_post_flow_self_check() -> list[tuple[str, bool, str]]:
     """シンプル画面の投稿作成フローが壊れていないか確認する。"""
     result_dir = Path("posts/result_next_posts")
@@ -321,6 +358,14 @@ def simple_render_admin() -> None:
                 st.error("投稿作成フローに問題があります。NG項目を確認してください。")
             else:
                 st.success("投稿作成フローは正常です。")
+
+    with st.expander("🧪 テスト投稿を作る", expanded=False):
+        st.caption("ゼロから一周テストしたい時だけ使います。今日投稿にテスト投稿を1件追加します。")
+        if st.button("🧪 今日投稿のテスト投稿を作成", key="simple_create_test_today_post"):
+            saved_path = simple_create_test_today_post()
+            st.session_state.go_to_today_posts = True
+            st.success(f"テスト投稿を作成しました: {saved_path}")
+            st.rerun()
 
     stock_file_groups = {
         "投稿予定": list(Path("posts/schedule").glob("*.md")),
