@@ -679,6 +679,9 @@ def simple_run_one_click_workflow() -> tuple[str, list[Path]]:
         if simple_extract_field(content, "状態") == "今日投稿":
             today_post_files.append(file_path)
 
+    if today_post_files:
+        return "すでに今日投稿があります。増やしすぎ防止のため、新しい今日投稿は作りませんでした。", today_post_files
+
     if reaction_memo_files:
         source_path = reaction_memo_files[0]
         next_post_path = simple_create_result_next_post_from_result_memo(source_path)
@@ -710,9 +713,6 @@ def simple_run_one_click_workflow() -> tuple[str, list[Path]]:
             created_paths.append(simple_save_scheduled_post_from_final_post(file_path, "今日投稿"))
 
         return "完成版投稿から、今日投稿に追加しました。", created_paths
-
-    if today_post_files:
-        return "すでに今日投稿があります。今日やる投稿画面で本文を確認してください。", today_post_files
 
     return "進められる素材がまだありません。まず投稿か反応メモを作ってください。", []
 
