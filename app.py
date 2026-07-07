@@ -582,6 +582,13 @@ def simple_create_result_next_post_from_result_memo(file_path: Path) -> Path:
     result_dir = Path("posts/result_next_posts")
     result_dir.mkdir(parents=True, exist_ok=True)
 
+    # 同じ反応メモから作った次投稿案がすでにある場合は、新規生成せず既存ファイルを使う。
+    for existing_next_path in sorted(result_dir.glob("*.md"), reverse=True):
+        existing_content = existing_next_path.read_text(encoding="utf-8")
+        existing_source = simple_extract_field(existing_content, "元の反応メモファイル")
+        if existing_source == str(file_path):
+            return existing_next_path
+
     prompt = f"""
 以下は投稿後の反応メモです。
 この内容をもとに、次に投稿するための案を作ってください。
