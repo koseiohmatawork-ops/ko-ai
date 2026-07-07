@@ -941,11 +941,11 @@ def show_post_stock() -> None:
                 st.subheader(file_path.name)
                 st.write(content)
 
-                col1, col2, col3 = st.columns(3)
+                col1, col2, col3, col4 = st.columns(4)
 
                 with col1:
                     st.download_button(
-                        "📝 反応ベース次投稿をダウンロード",
+                        "📝 ダウンロード",
                         data=content,
                         file_name=file_path.name,
                         mime="text/markdown",
@@ -953,13 +953,19 @@ def show_post_stock() -> None:
                     )
 
                 with col2:
-                    if st.button("✅ 完成版に追加", key=f"finalize_result_next_post_{file_path.name}"):
+                    if st.button("✅ X完成版に追加", key=f"finalize_result_next_post_x_{file_path.name}"):
                         saved_path = save_final_post_from_result_next_post(file_path, "X")
-                        st.success(f"完成版投稿に追加しました: {saved_path}")
+                        st.success(f"X完成版投稿に追加しました: {saved_path}")
                         st.rerun()
 
                 with col3:
-                    if st.button("🗑 次投稿案を削除", key=f"delete_result_next_post_{file_path.name}"):
+                    if st.button("📷 Instagram完成版に追加", key=f"finalize_result_next_post_instagram_{file_path.name}"):
+                        saved_path = save_final_post_from_result_next_post(file_path, "Instagram")
+                        st.success(f"Instagram完成版投稿に追加しました: {saved_path}")
+                        st.rerun()
+
+                with col4:
+                    if st.button("🗑 削除", key=f"delete_result_next_post_{file_path.name}"):
                         delete_result_next_post(file_path)
                         st.success("次投稿案を削除しました")
                         st.rerun()
