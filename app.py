@@ -630,7 +630,8 @@ def simple_render_stock_viewer() -> None:
             instagram_final_path = simple_save_final_post_from_result_next_post(next_post_path, "Instagram")
             x_schedule_path = simple_save_scheduled_post_from_final_post(x_final_path, "今日投稿")
             instagram_schedule_path = simple_save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
-            st.success("今日投稿まで一括作成しました。")
+            st.session_state.go_to_today_posts = True
+            st.success("今日投稿まで一括作成しました。今日やる投稿画面に戻ります。")
             st.caption(f"X今日投稿: {x_schedule_path}")
             st.caption(f"Instagram今日投稿: {instagram_schedule_path}")
             st.rerun()
@@ -641,7 +642,8 @@ def simple_render_stock_viewer() -> None:
             instagram_final_path = simple_save_final_post_from_result_next_post(selected_file, "Instagram")
             x_schedule_path = simple_save_scheduled_post_from_final_post(x_final_path, "今日投稿")
             instagram_schedule_path = simple_save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
-            st.success("X・Instagramを今日投稿に追加しました。")
+            st.session_state.go_to_today_posts = True
+            st.success("X・Instagramを今日投稿に追加しました。今日やる投稿画面に戻ります。")
             st.caption(f"X今日投稿: {x_schedule_path}")
             st.caption(f"Instagram今日投稿: {instagram_schedule_path}")
             st.rerun()
@@ -649,7 +651,8 @@ def simple_render_stock_viewer() -> None:
     elif selected_group_type == "final_post":
         if st.button("📌 今日投稿に追加", key=f"simple_today_from_final_post_{selected_file}"):
             saved_path = simple_save_scheduled_post_from_final_post(selected_file, "今日投稿")
-            st.success(f"今日投稿に追加しました: {saved_path}")
+            st.session_state.go_to_today_posts = True
+            st.success(f"今日投稿に追加しました。今日やる投稿画面に戻ります: {saved_path}")
             st.rerun()
 
     with st.expander("細かい操作", expanded=False):
@@ -667,6 +670,10 @@ def simple_render_stock_viewer() -> None:
 
 
 st.divider()
+if st.session_state.get("go_to_today_posts"):
+    st.session_state.simple_mode = "今日やる投稿"
+    st.session_state.go_to_today_posts = False
+
 simple_mode = st.selectbox(
     "使う画面",
     ["今日やる投稿", "投稿ストックを見る", "詳細モード（必要な時だけ）"],
