@@ -731,12 +731,14 @@ def simple_render_today_posts() -> None:
             if st.button("✅ 投稿済みにして反応メモ下書きも作る", key=f"simple_mark_posted_{selected_file.name}"):
                 simple_update_schedule_status(selected_file, "投稿済み")
                 saved_path = simple_create_post_result_draft_from_schedule(selected_file)
+                st.session_state.go_to_reaction_memos = True
                 st.success("投稿済みに変更しました")
                 st.success(f"反応メモ下書きを作りました: {saved_path}")
                 st.rerun()
         else:
             if st.button("📈 反応メモ下書きを作る", key=f"simple_create_result_draft_{selected_file.name}"):
                 saved_path = simple_create_post_result_draft_from_schedule(selected_file)
+                st.session_state.go_to_reaction_memos = True
                 st.success(f"反応メモ下書きを作りました: {saved_path}")
                 st.rerun()
     with col2:
@@ -762,9 +764,15 @@ def simple_render_stock_viewer() -> None:
     ]
 
     st.subheader("📦 投稿ストックを見る")
+    stock_group_labels = [f"{label} {len(files)}件" for label, files, _ in stock_groups]
+
+    if st.session_state.get("go_to_reaction_memos"):
+        st.session_state.simple_stock_group = stock_group_labels[2]
+        st.session_state.go_to_reaction_memos = False
+
     group_label = st.selectbox(
         "見るストック",
-        [f"{label} {len(files)}件" for label, files, _ in stock_groups],
+        stock_group_labels,
         key="simple_stock_group",
     )
     group_index = [f"{label} {len(files)}件" for label, files, _ in stock_groups].index(group_label)
@@ -906,6 +914,9 @@ st.divider()
 if st.session_state.get("go_to_today_posts"):
     st.session_state.simple_mode = "今日やる投稿"
     st.session_state.go_to_today_posts = False
+
+if st.session_state.get("go_to_reaction_memos"):
+    st.session_state.simple_mode = "投稿ストックを見る"
 
 simple_mode = st.selectbox(
     "使う画面",
