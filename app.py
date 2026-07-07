@@ -330,24 +330,25 @@ def simple_render_today_posts() -> None:
 
 def simple_render_stock_viewer() -> None:
     stock_groups = [
-        ("投稿予定", sorted(Path("posts/schedule").glob("*.md"), reverse=True)),
-        ("完成版投稿", sorted(Path("posts/final_posts").glob("**/*.md"), reverse=True)),
-        ("反応メモ", sorted(Path("posts/results").glob("*.md"), reverse=True)),
-        ("反応ベース次投稿", sorted(Path("posts/result_next_posts").glob("*.md"), reverse=True)),
-        ("X投稿", sorted(Path("posts/x").glob("*.txt"), reverse=True)),
-        ("Instagram投稿", sorted(Path("posts/instagram").glob("*.md"), reverse=True)),
-        ("note記事", sorted(Path("posts/note").glob("*.md"), reverse=True)),
-        ("アイデア", sorted(Path("posts/ideas").glob("*.txt"), reverse=True)),
+        ("投稿予定", sorted(Path("posts/schedule").glob("*.md"), reverse=True), "schedule"),
+        ("完成版投稿", sorted(Path("posts/final_posts").glob("**/*.md"), reverse=True), "final_post"),
+        ("反応メモ", sorted(Path("posts/results").glob("*.md"), reverse=True), "post_result"),
+        ("反応ベース次投稿", sorted(Path("posts/result_next_posts").glob("*.md"), reverse=True), "result_next"),
+        ("X投稿", sorted(Path("posts/x").glob("*.txt"), reverse=True), "normal"),
+        ("Instagram投稿", sorted(Path("posts/instagram").glob("*.md"), reverse=True), "normal"),
+        ("note記事", sorted(Path("posts/note").glob("*.md"), reverse=True), "normal"),
+        ("アイデア", sorted(Path("posts/ideas").glob("*.txt"), reverse=True), "normal"),
     ]
 
     st.subheader("📦 投稿ストックを見る")
     group_label = st.selectbox(
         "見るストック",
-        [f"{label} {len(files)}件" for label, files in stock_groups],
+        [f"{label} {len(files)}件" for label, files, _ in stock_groups],
         key="simple_stock_group",
     )
-    group_index = [f"{label} {len(files)}件" for label, files in stock_groups].index(group_label)
+    group_index = [f"{label} {len(files)}件" for label, files, _ in stock_groups].index(group_label)
     selected_files = stock_groups[group_index][1]
+    selected_group_type = stock_groups[group_index][2]
 
     if not selected_files:
         st.info("このストックにはまだファイルがありません")
@@ -368,6 +369,35 @@ def simple_render_stock_viewer() -> None:
         height=360,
         key=f"simple_stock_body_{selected_file}",
     )
+
+    if selected_group_type == "post_result":
+        if st.button("📌 今日投稿まで一括作成", key=f"simple_auto_today_from_result_{selected_file.name}"):
+            next_post_path = create_result_next_post_from_result_memo(selected_file)
+            x_final_path = save_final_post_from_result_next_post(next_post_path, "X")
+            instagram_final_path = save_final_post_from_result_next_post(next_post_path, "Instagram")
+            x_schedule_path = save_scheduled_post_from_final_post(x_final_path, "今日投稿")
+            instagram_schedule_path = save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
+            st.success("今日投稿まで一括作成しました。")
+            st.caption(f"X今日投稿: {x_schedule_path}")
+            st.caption(f"Instagram今日投稿: {instagram_schedule_path}")
+            st.rerun()
+
+    elif selected_group_type == "result_next":
+        if st.button("📌 X・Instagramを今日投稿に追加", key=f"simple_today_from_result_next_{selected_file.name}"):
+            x_final_path = save_final_post_from_result_next_post(selected_file, "X")
+            instagram_final_path = save_final_post_from_result_next_post(selected_file, "Instagram")
+            x_schedule_path = save_scheduled_post_from_final_post(x_final_path, "今日投稿")
+            instagram_schedule_path = save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
+            st.success("X・Instagramを今日投稿に追加しました。")
+            st.caption(f"X今日投稿: {x_schedule_path}")
+            st.caption(f"Instagram今日投稿: {instagram_schedule_path}")
+            st.rerun()
+
+    elif selected_group_type == "final_post":
+        if st.button("📌 今日投稿に追加", key=f"simple_today_from_final_post_{selected_file}"):
+            saved_path = save_scheduled_post_from_final_post(selected_file, "今日投稿")
+            st.success(f"今日投稿に追加しました: {saved_path}")
+            st.rerun()
 
     with st.expander("細かい操作", expanded=False):
         st.download_button(
