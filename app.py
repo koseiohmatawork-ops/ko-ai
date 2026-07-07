@@ -1,5 +1,6 @@
 import io
 import zipfile
+from datetime import datetime
 
 import streamlit as st
 from pathlib import Path
@@ -194,6 +195,55 @@ def simple_update_schedule_status(file_path: Path, new_status: str) -> None:
     file_path.write_text(new_content, encoding="utf-8")
 
 
+def simple_create_post_result_draft_from_schedule(file_path: Path) -> Path:
+    """投稿予定から、投稿後の反応メモ下書きを作る。"""
+    content = file_path.read_text(encoding="utf-8")
+    title = simple_extract_field(content, "投稿名") or file_path.stem
+    platform = simple_extract_field(content, "投稿先") or "X"
+    body = simple_extract_post_body(content)
+
+    results_dir = Path("posts/results")
+    results_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_title = title.strip().replace("/", "_").replace(" ", "_")[:40] or "post_result"
+    save_path = results_dir / f"{timestamp}_{platform}_{safe_title}.md"
+
+    output = f"""
+# 投稿反応メモ
+
+## 投稿名
+{title}
+
+## 投稿先
+{platform}
+
+## 数字
+- インプレッション: 0
+- いいね: 0
+- コメント: 0
+- 保存: 0
+- プロフィールクリック: 0
+- リンククリック: 0
+
+## 反応メモ
+あとで実際の反応を入力する
+
+## 元投稿
+{file_path}
+
+## 投稿本文
+{body}
+
+## 気づき
+
+## 次に活かすこと
+""".strip()
+
+    save_path.write_text(output, encoding="utf-8")
+    return save_path
+
+
 def simple_render_today_posts() -> None:
     scheduled_files = sorted(Path("posts/schedule").glob("*.md"), reverse=True)
 
@@ -262,7 +312,10 @@ def simple_render_today_posts() -> None:
                 st.success("投稿済みに変更しました")
                 st.rerun()
         else:
-            st.caption("投稿済みです")
+            if st.button("📈 反応メモ下書きを作る", key=f"simple_create_result_draft_{selected_file.name}"):
+                saved_path = simple_create_post_result_draft_from_schedule(selected_file)
+                st.success(f"反応メモ下書きを作りました: {saved_path}")
+                st.rerun()
     with col2:
         if st.button("🗑 削除", key=f"simple_delete_schedule_{selected_file.name}"):
             selected_file.unlink()
