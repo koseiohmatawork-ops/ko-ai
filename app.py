@@ -307,9 +307,11 @@ def simple_render_today_posts() -> None:
     col1, col2 = st.columns(2)
     with col1:
         if selected_status != "投稿済み":
-            if st.button("✅ 投稿済みにする", key=f"simple_mark_posted_{selected_file.name}"):
+            if st.button("✅ 投稿済みにして反応メモ下書きも作る", key=f"simple_mark_posted_{selected_file.name}"):
                 simple_update_schedule_status(selected_file, "投稿済み")
+                saved_path = simple_create_post_result_draft_from_schedule(selected_file)
                 st.success("投稿済みに変更しました")
+                st.success(f"反応メモ下書きを作りました: {saved_path}")
                 st.rerun()
         else:
             if st.button("📈 反応メモ下書きを作る", key=f"simple_create_result_draft_{selected_file.name}"):
