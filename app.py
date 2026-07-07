@@ -732,6 +732,7 @@ def simple_render_today_posts() -> None:
                 simple_update_schedule_status(selected_file, "投稿済み")
                 saved_path = simple_create_post_result_draft_from_schedule(selected_file)
                 st.session_state.go_to_reaction_memos = True
+                st.session_state.open_reaction_memo_path = str(saved_path)
                 st.success("投稿済みに変更しました")
                 st.success(f"反応メモ下書きを作りました: {saved_path}")
                 st.rerun()
@@ -739,6 +740,7 @@ def simple_render_today_posts() -> None:
             if st.button("📈 反応メモ下書きを作る", key=f"simple_create_result_draft_{selected_file.name}"):
                 saved_path = simple_create_post_result_draft_from_schedule(selected_file)
                 st.session_state.go_to_reaction_memos = True
+                st.session_state.open_reaction_memo_path = str(saved_path)
                 st.success(f"反応メモ下書きを作りました: {saved_path}")
                 st.rerun()
     with col2:
@@ -784,6 +786,14 @@ def simple_render_stock_viewer() -> None:
         return
 
     stock_file_options = simple_file_options(selected_files)
+    open_reaction_memo_path = st.session_state.get("open_reaction_memo_path")
+    if open_reaction_memo_path:
+        for option_label, option_path in stock_file_options.items():
+            if str(option_path) == open_reaction_memo_path:
+                st.session_state.simple_stock_file = option_label
+                break
+        st.session_state.open_reaction_memo_path = ""
+
     selected_file_label = st.selectbox(
         "ファイルを選ぶ",
         list(stock_file_options.keys()),
