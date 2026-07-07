@@ -778,6 +778,38 @@ def simple_render_execution_result() -> None:
             st.rerun()
 
 
+# 新規追加: simple_render_next_action_hint
+def simple_render_next_action_hint() -> None:
+    """中央エリアに、今次に押すべき行動を表示する。"""
+    today_count = 0
+    posted_count = 0
+
+    for file_path in Path("posts/schedule").glob("*.md"):
+        content = file_path.read_text(encoding="utf-8")
+        status = simple_extract_field(content, "状態")
+        if status == "今日投稿":
+            today_count += 1
+        elif status == "投稿済み":
+            posted_count += 1
+
+    reaction_memo_count = len(list(Path("posts/results").glob("*.md")))
+    result_next_count = len(list(Path("posts/result_next_posts").glob("*.md")))
+    final_post_count = len(list(Path("posts/final_posts").glob("**/*.md")))
+
+    if today_count > 0:
+        st.info("次にやること：今日やる投稿を開いて、投稿本文をコピーしてください。投稿後は『投稿済みにして反応メモ下書きも作る』を押します。")
+    elif reaction_memo_count > 0:
+        st.info("次にやること：左の『🚀 今日投稿まで作る』を押すと、反応メモから今日投稿まで作れます。")
+    elif result_next_count > 0:
+        st.info("次にやること：左の『🚀 今日投稿まで作る』を押すと、次投稿案から今日投稿まで作れます。")
+    elif final_post_count > 0:
+        st.info("次にやること：左の『🚀 今日投稿まで作る』を押すと、完成版投稿を今日投稿に追加できます。")
+    elif posted_count > 0:
+        st.info("次にやること：投稿済みの投稿から反応メモ下書きを作ってください。")
+    else:
+        st.info("次にやること：まだ素材が少ないです。管理画面の『テスト投稿を作る』で一周テストできます。")
+
+
 def simple_render_today_posts() -> None:
     scheduled_files = sorted(Path("posts/schedule").glob("*.md"), reverse=True)
 
@@ -1054,6 +1086,7 @@ with st.sidebar:
     )
 
 simple_render_execution_result()
+simple_render_next_action_hint()
 st.divider()
 
 if simple_mode == "今日やる投稿":
