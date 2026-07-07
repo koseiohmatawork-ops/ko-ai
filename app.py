@@ -889,8 +889,9 @@ def simple_render_today_posts() -> None:
                 st.rerun()
     with col2:
         if st.button("🗑 削除", key=f"simple_delete_schedule_{selected_file.name}"):
+            deleted_path = selected_file
             selected_file.unlink()
-            st.success("削除しました")
+            simple_set_execution_result("投稿予定を削除しました。", [deleted_path])
             st.rerun()
 
     with st.expander("詳細", expanded=False):
@@ -1016,7 +1017,7 @@ def simple_render_stock_viewer() -> None:
                     edited_link_clicks,
                     edited_memo,
                 )
-                st.success("反応メモを保存しました")
+                simple_set_execution_result("反応メモを保存しました。", [selected_file])
                 st.rerun()
 
         if st.button("📌 今日投稿まで一括作成", key=f"simple_auto_today_from_result_{selected_file.name}"):
@@ -1061,8 +1062,9 @@ def simple_render_stock_viewer() -> None:
             key=f"simple_download_{selected_file}",
         )
         if st.button("🗑 削除", key=f"simple_delete_stock_{selected_file}"):
+            deleted_path = selected_file
             selected_file.unlink()
-            st.success("削除しました")
+            simple_set_execution_result("ストックを削除しました。", [deleted_path])
             st.rerun()
 
 
