@@ -311,6 +311,29 @@ Instagram投稿案
 
     return results
 
+def simple_cleanup_today_posts_keep_latest_by_platform() -> tuple[int, list[Path]]:
+    """今日投稿を投稿先ごとに最新1件だけ残して整理する。"""
+    today_posts_by_platform: dict[str, list[Path]] = {}
+
+    for file_path in sorted(Path("posts/schedule").glob("*.md"), reverse=True):
+        content = file_path.read_text(encoding="utf-8")
+        status = simple_extract_field(content, "状態")
+        if status != "今日投稿":
+            continue
+
+        platform = simple_extract_field(content, "投稿先") or "投稿"
+        today_posts_by_platform.setdefault(platform, []).append(file_path)
+
+    deleted_paths: list[Path] = []
+    for files in today_posts_by_platform.values():
+        files_to_delete = files[1:]
+        for file_path in files_to_delete:
+            if file_path.exists():
+                file_path.unlink()
+                deleted_paths.append(file_path)
+
+    return len(deleted_paths), deleted_paths
+
 def simple_render_admin() -> None:
     """シンプル管理画面。普段使う最低限の管理だけ置く。"""
     st.subheader("⚙️ 管理")
@@ -365,6 +388,25 @@ def simple_render_admin() -> None:
             saved_path = simple_create_test_today_post()
             st.session_state.go_to_today_posts = True
             simple_set_execution_result("テスト投稿を作成しました。", [saved_path])
+            st.rerun()
+
+    with st.expander("🧹 今日投稿を整理", expanded=False):
+        st.caption("投稿先ごとに最新1件だけ残して、増えすぎた今日投稿を削除します。")
+        confirm_cleanup_today = st.checkbox(
+            "今日投稿を整理することを確認しました",
+            key="simple_confirm_cleanup_today_posts",
+        )
+        if st.button(
+            "🧹 今日投稿を整理する",
+            disabled=not confirm_cleanup_today,
+            key="simple_cleanup_today_posts",
+        ):
+            deleted_count, deleted_paths = simple_cleanup_today_posts_keep_latest_by_platform()
+            st.session_state.go_to_today_posts = True
+            simple_set_execution_result(
+                f"今日投稿を整理しました。{deleted_count}件削除しました。",
+                deleted_paths,
+            )
             st.rerun()
 
     stock_file_groups = {
