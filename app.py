@@ -718,17 +718,34 @@ def simple_run_one_click_workflow() -> tuple[str, list[Path]]:
 
 
 def simple_render_one_click_button() -> None:
-    """画面上部に置くワンクリック実行ボタン。"""
+    """左サイドバーに置くワンクリック実行ボタン。"""
     st.markdown("### 🚀 ワンクリック実行")
     st.caption("今ある素材から、作れるところまで自動で進めます。")
 
-    if st.button("🚀 今ある素材から今日投稿まで作る", key="simple_one_click_workflow"):
+    if st.button("🚀 今日投稿まで作る", key="simple_one_click_workflow", use_container_width=True):
         message, created_paths = simple_run_one_click_workflow()
         st.session_state.go_to_today_posts = True
-        st.success(message)
-        for created_path in created_paths[:8]:
-            st.caption(str(created_path))
+        st.session_state.simple_execution_message = message
+        st.session_state.simple_execution_paths = [str(path) for path in created_paths[:8]]
         st.rerun()
+
+
+def simple_render_execution_result() -> None:
+    """中央エリアに直近の実行結果を表示する。"""
+    message = st.session_state.get("simple_execution_message", "")
+    paths = st.session_state.get("simple_execution_paths", [])
+
+    if not message:
+        return
+
+    with st.expander("✅ 直近の実行結果", expanded=True):
+        st.success(message)
+        for path_text in paths:
+            st.caption(path_text)
+        if st.button("実行結果を閉じる", key="simple_clear_execution_result"):
+            st.session_state.simple_execution_message = ""
+            st.session_state.simple_execution_paths = []
+            st.rerun()
 
 
 def simple_render_today_posts() -> None:
@@ -986,9 +1003,6 @@ def simple_render_stock_viewer() -> None:
             st.rerun()
 
 
-st.divider()
-simple_render_one_click_button()
-st.divider()
 if st.session_state.get("go_to_today_posts"):
     st.session_state.simple_mode = "今日やる投稿"
     st.session_state.go_to_today_posts = False
@@ -996,11 +1010,18 @@ if st.session_state.get("go_to_today_posts"):
 if st.session_state.get("go_to_reaction_memos"):
     st.session_state.simple_mode = "投稿ストックを見る"
 
-simple_mode = st.selectbox(
-    "使う画面",
-    ["今日やる投稿", "投稿ストックを見る", "管理", "詳細モード（必要な時だけ）"],
-    key="simple_mode",
-)
+with st.sidebar:
+    st.markdown("## 操作")
+    simple_render_one_click_button()
+    st.divider()
+    simple_mode = st.radio(
+        "使う画面",
+        ["今日やる投稿", "投稿ストックを見る", "管理", "詳細モード（必要な時だけ）"],
+        key="simple_mode",
+    )
+
+simple_render_execution_result()
+st.divider()
 
 if simple_mode == "今日やる投稿":
     simple_render_today_posts()
