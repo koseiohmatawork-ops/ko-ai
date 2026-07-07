@@ -738,14 +738,32 @@ def simple_run_one_click_workflow() -> tuple[str, list[Path]]:
         return "すでに今日投稿があります。増やしすぎ防止のため、新しい今日投稿は作りませんでした。", today_post_files
 
     if reaction_memo_files:
-        source_path = reaction_memo_files[0]
+        processed_reaction_memo_paths = set()
+        for existing_next_path in Path("posts/result_next_posts").glob("*.md"):
+            existing_content = existing_next_path.read_text(encoding="utf-8")
+            existing_source = simple_extract_field(existing_content, "元の反応メモファイル")
+            if existing_source:
+                processed_reaction_memo_paths.add(existing_source)
+
+        unprocessed_reaction_memos = [
+            file_path for file_path in reaction_memo_files
+            if str(file_path) not in processed_reaction_memo_paths
+        ]
+
+        if unprocessed_reaction_memos:
+            source_path = unprocessed_reaction_memos[0]
+            source_message = "未処理の反応メモから、次投稿案・完成版・今日投稿まで一括作成しました。"
+        else:
+            source_path = reaction_memo_files[0]
+            source_message = "反応メモはすでに処理済みです。既存データから今日投稿まで確認しました。"
+
         next_post_path = simple_create_result_next_post_from_result_memo(source_path)
         x_final_path = simple_save_final_post_from_result_next_post(next_post_path, "X")
         instagram_final_path = simple_save_final_post_from_result_next_post(next_post_path, "Instagram")
         x_schedule_path = simple_save_scheduled_post_from_final_post(x_final_path, "今日投稿")
         instagram_schedule_path = simple_save_scheduled_post_from_final_post(instagram_final_path, "今日投稿")
         created_paths.extend([next_post_path, x_final_path, instagram_final_path, x_schedule_path, instagram_schedule_path])
-        return "反応メモから、次投稿案・完成版・今日投稿まで一括作成しました。", created_paths
+        return source_message, created_paths
 
     if result_next_files:
         source_path = result_next_files[0]
