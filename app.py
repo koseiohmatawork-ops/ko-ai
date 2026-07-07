@@ -58,6 +58,16 @@ client = OpenAI()
 
 st.set_page_config(page_title="Ko AI", page_icon="🤖")
 
+BRAND_STRATEGY_PATH = Path("memory/brand_strategy.md")
+
+
+def simple_get_brand_strategy() -> str:
+    """Ko AIの投稿運用方針を読み込む。"""
+    if BRAND_STRATEGY_PATH.exists():
+        return BRAND_STRATEGY_PATH.read_text(encoding="utf-8").strip()
+    return ""
+
+
 def simple_extract_field(content: str, field_name: str) -> str:
     marker = f"## {field_name}"
     if marker not in content:
@@ -589,15 +599,25 @@ def simple_create_result_next_post_from_result_memo(file_path: Path) -> Path:
         if existing_source == str(file_path):
             return existing_next_path
 
+    brand_strategy = simple_get_brand_strategy()
+
     prompt = f"""
+以下はKo AIの投稿運用方針です。
+この方針を必ず優先してください。
+
+運用方針:
+{brand_strategy}
+
 以下は投稿後の反応メモです。
 この内容をもとに、次に投稿するための案を作ってください。
 
 条件:
 - 日本語
-- 大学生が自然に書く感じ
-- 煽りすぎない
-- X投稿案とInstagram投稿案を分ける
+- 大学生を軸にしない
+- 投稿内容は固定ジャンルに縛りすぎない
+- 目的は、まず人気アカウント化して、その後に収益化へつなげること
+- X投稿案とnote記事案を分ける
+- 伸びそうな切り口、本音、共感、失敗談、逆張り、比較、気づきを意識する
 - 投稿前の注意点も短く書く
 
 反応メモ:
