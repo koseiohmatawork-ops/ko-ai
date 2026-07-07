@@ -203,6 +203,15 @@ def simple_clear_all_post_stocks() -> int:
     return deleted_count
 
 
+def simple_delete_files(file_paths: list[Path]) -> int:
+    """指定された投稿ストックファイルだけを削除する。"""
+    deleted_count = 0
+    for file_path in file_paths:
+        if file_path.exists() and file_path.is_file():
+            file_path.unlink()
+            deleted_count += 1
+    return deleted_count
+
 def simple_render_admin() -> None:
     """シンプル管理画面。普段使う最低限の管理だけ置く。"""
     st.subheader("⚙️ 管理")
@@ -233,6 +242,38 @@ def simple_render_admin() -> None:
             st.write(f"{label}: {count}件")
 
     st.caption(f"合計: {total_count}件")
+
+    stock_file_groups = {
+        "投稿予定": list(Path("posts/schedule").glob("*.md")),
+        "完成版投稿": list(Path("posts/final_posts").glob("**/*.md")),
+        "反応メモ": list(Path("posts/results").glob("*.md")),
+        "反応ベース次投稿": list(Path("posts/result_next_posts").glob("*.md")),
+        "X投稿": list(Path("posts/x").glob("*.txt")),
+        "Instagram投稿": list(Path("posts/instagram").glob("*.md")),
+        "note記事": list(Path("posts/note").glob("*.md")),
+        "アイデア": list(Path("posts/ideas").glob("*.txt")),
+    }
+
+    with st.expander("🧹 カテゴリ別に削除", expanded=False):
+        delete_category = st.selectbox(
+            "削除するカテゴリ",
+            list(stock_file_groups.keys()),
+            key="simple_delete_category",
+        )
+        delete_targets = stock_file_groups[delete_category]
+        st.warning(f"{delete_category} のストック {len(delete_targets)}件を削除します。")
+        confirm_category_delete = st.checkbox(
+            f"{delete_category} を削除することを確認しました",
+            key="simple_confirm_category_delete",
+        )
+        if st.button(
+            f"🗑 {delete_category}を削除",
+            disabled=not confirm_category_delete or not delete_targets,
+            key="simple_delete_category_button",
+        ):
+            deleted_count = simple_delete_files(delete_targets)
+            st.success(f"{delete_category}を{deleted_count}件削除しました。")
+            st.rerun()
 
     with st.expander("🧹 全ストック削除", expanded=False):
         st.warning("posts配下の投稿ストックファイル（.md / .txt）を全部削除します。")
