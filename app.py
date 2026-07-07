@@ -62,7 +62,17 @@ st.title("🤖 Ko AI")
 st.caption("自分専用AIアシスタント")
 
 with st.expander("今日使う流れ", expanded=False):
-    st.caption("今日の投稿メニュー → 実投稿生成 → 安全チェック → 完成版保存 → 投稿予定で管理")
+    st.markdown(
+        """
+1. **今日やる投稿** で投稿本文をコピーする
+2. 投稿したら **投稿済みにして反応メモ下書きも作る** を押す
+3. **投稿ストックを見る → 反応メモ** で数字と気づきを入力する
+4. **今日投稿まで一括作成** を押して、次のX・Instagram投稿を作る
+5. 自動で **今日やる投稿** に戻るので、次の投稿本文を確認する
+
+迷ったら、まずは **今日やる投稿** だけ見ればOKです。
+        """.strip()
+    )
 
 
 def simple_extract_field(content: str, field_name: str) -> str:
