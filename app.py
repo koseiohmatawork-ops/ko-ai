@@ -178,6 +178,38 @@ def simple_file_options(file_paths: list[Path]) -> dict[str, Path]:
     return options
 
 
+def simple_clear_all_post_stocks() -> int:
+    """シンプル管理画面用。posts配下の投稿ストックファイルを削除する。"""
+    posts_dir = Path("posts")
+    if not posts_dir.exists():
+        return 0
+
+    deleted_count = 0
+    for file_path in posts_dir.rglob("*"):
+        if file_path.is_file() and file_path.suffix in [".md", ".txt"]:
+            file_path.unlink()
+            deleted_count += 1
+
+    return deleted_count
+
+
+def simple_render_admin() -> None:
+    """シンプル管理画面。普段使う最低限の管理だけ置く。"""
+    st.subheader("⚙️ 管理")
+    st.caption("テストデータを消したい時だけ使います。")
+
+    with st.expander("🧹 全ストック削除", expanded=False):
+        st.warning("posts配下の投稿ストックファイル（.md / .txt）を全部削除します。")
+        confirm_clear = st.checkbox(
+            "全ストックを削除することを確認しました",
+            key="simple_confirm_clear_all_stocks",
+        )
+        if st.button("🧹 全ストックを削除", disabled=not confirm_clear, key="simple_clear_all_stocks"):
+            deleted_count = simple_clear_all_post_stocks()
+            st.success(f"{deleted_count}件のストックファイルを削除しました。")
+            st.rerun()
+
+
 def simple_update_schedule_status(file_path: Path, new_status: str) -> None:
     content = file_path.read_text(encoding="utf-8")
     if "## 状態" in content:
@@ -676,7 +708,7 @@ if st.session_state.get("go_to_today_posts"):
 
 simple_mode = st.selectbox(
     "使う画面",
-    ["今日やる投稿", "投稿ストックを見る", "詳細モード（必要な時だけ）"],
+    ["今日やる投稿", "投稿ストックを見る", "管理", "詳細モード（必要な時だけ）"],
     key="simple_mode",
 )
 
@@ -687,6 +719,11 @@ if simple_mode == "今日やる投稿":
 if simple_mode == "投稿ストックを見る":
     simple_render_stock_viewer()
     st.stop()
+
+if simple_mode == "管理":
+    simple_render_admin()
+    st.stop()
+
 
 st.warning("詳細モードです。古い生成フォームや管理機能を使う時だけこの画面を使ってください。")
 
