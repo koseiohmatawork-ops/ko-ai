@@ -760,7 +760,7 @@ def simple_run_one_click_workflow() -> tuple[str, list[Path]]:
 
 
 def simple_sidebar_status_counts() -> None:
-    """左サイドバーに現在の投稿状態を表示する。"""
+    """左サイドバーに現在の投稿状態と簡易整理ボタンを表示する。"""
     today_count = 0
     posted_count = 0
 
@@ -782,6 +782,17 @@ def simple_sidebar_status_counts() -> None:
     st.caption(f"反応メモ: {reaction_memo_count}件")
     st.caption(f"次投稿案: {result_next_count}件")
     st.caption(f"完成版: {final_post_count}件")
+
+    if today_count > 2:
+        st.warning("今日投稿が増えすぎています")
+        if st.button("🧹 今日投稿を整理", key="simple_sidebar_cleanup_today_posts", use_container_width=True):
+            deleted_count, deleted_paths = simple_cleanup_today_posts_keep_latest_by_platform()
+            st.session_state.go_to_today_posts = True
+            simple_set_execution_result(
+                f"今日投稿を整理しました。{deleted_count}件削除しました。",
+                deleted_paths,
+            )
+            st.rerun()
 
 
 def simple_render_one_click_button() -> None:
