@@ -58,7 +58,7 @@ client = OpenAI()
 
 st.set_page_config(page_title="Ko AI", page_icon="🤖")
 
-st.title("🤖 Ko AI")
+st.markdown("### 🤖 Ko AI")
 st.caption("自分専用AIアシスタント")
 
 def simple_extract_field(content: str, field_name: str) -> str:
