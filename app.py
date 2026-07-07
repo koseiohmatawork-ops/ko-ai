@@ -74,12 +74,24 @@ def simple_extract_field(content: str, field_name: str) -> str:
     return value.strip()
 
 
+def simple_clean_post_body(body: str) -> str:
+    """コピー欄に不要な区切り線や空見出しを出さないように整える。"""
+    cleaned_lines = []
+    for line in body.strip().splitlines():
+        stripped_line = line.strip()
+        if stripped_line in ["---", "###", "##", "#"]:
+            continue
+        cleaned_lines.append(line)
+
+    return "\n".join(cleaned_lines).strip()
+
+
 def simple_extract_post_body(content: str) -> str:
     """投稿予定や完成版投稿から、実際にコピーする投稿本文だけを取り出す。"""
     # 投稿予定の中に完成版投稿が丸ごと入っている場合は、
     # 「## 投稿本文」が複数回出るため、最後の「## 投稿本文」以降を使う。
     if content.count("## 投稿本文") >= 2:
-        return content.split("## 投稿本文")[-1].strip()
+        return simple_clean_post_body(content.split("## 投稿本文")[-1].strip())
 
     body = simple_extract_field(content, "投稿本文") or content.strip()
 
@@ -91,7 +103,7 @@ def simple_extract_post_body(content: str) -> str:
     if body.strip() == "# 完成版投稿":
         return ""
 
-    return body.strip()
+    return simple_clean_post_body(body)
 
 
 def simple_update_schedule_status(file_path: Path, new_status: str) -> None:
