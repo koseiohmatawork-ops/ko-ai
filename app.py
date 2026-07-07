@@ -75,7 +75,23 @@ def simple_extract_field(content: str, field_name: str) -> str:
 
 
 def simple_extract_post_body(content: str) -> str:
-    return simple_extract_field(content, "投稿本文") or content.strip()
+    """投稿予定や完成版投稿から、実際にコピーする投稿本文だけを取り出す。"""
+    # 投稿予定の中に完成版投稿が丸ごと入っている場合は、
+    # 「## 投稿本文」が複数回出るため、最後の「## 投稿本文」以降を使う。
+    if content.count("## 投稿本文") >= 2:
+        return content.split("## 投稿本文")[-1].strip()
+
+    body = simple_extract_field(content, "投稿本文") or content.strip()
+
+    # 念のため、本文の中に完成版投稿のメタ情報が残っていた場合も最後の本文だけを使う。
+    if "## 投稿本文" in body:
+        body = body.split("## 投稿本文")[-1].strip()
+
+    # それでも完成版投稿の見出しだけが残る場合は、コピー欄には出さない。
+    if body.strip() == "# 完成版投稿":
+        return ""
+
+    return body.strip()
 
 
 def simple_update_schedule_status(file_path: Path, new_status: str) -> None:
@@ -230,7 +246,7 @@ def simple_render_stock_viewer() -> None:
 st.divider()
 simple_mode = st.selectbox(
     "使う画面",
-    ["今日やる投稿", "投稿ストックを見る", "詳細モード"],
+    ["今日やる投稿", "投稿ストックを見る", "詳細モード（必要な時だけ）"],
     key="simple_mode",
 )
 
@@ -243,6 +259,16 @@ if simple_mode == "投稿ストックを見る":
     st.stop()
 
 st.warning("詳細モードです。古い生成フォームや管理機能を使う時だけこの画面を使ってください。")
+
+show_legacy_detail_mode = st.checkbox(
+    "大量の詳細フォームを表示する",
+    value=False,
+    key="show_legacy_detail_mode",
+)
+
+if not show_legacy_detail_mode:
+    st.info("詳細フォームは非表示です。必要な時だけチェックを入れて表示してください。")
+    st.stop()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
